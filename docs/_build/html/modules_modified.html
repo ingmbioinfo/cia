@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cia package &mdash; CIA 0.0.post1.dev34+gb32d426.d20220708 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="CLUSTER INDEPENDENT ANNOTATION" href="tutorial/workflow/Cluster_Independent_Annotation.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> CIA
+          </a>
+              <div class="version">
+                0.0.post1.dev34+gb32d426.d20220708
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="readme.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#investigate">investigate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#report">report</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#utils">utils</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#external">external</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/workflow/Cluster_Independent_Annotation.html">Tutorial: CIA workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/benchmark/CIA_benchmarking.html">Tutorial: CIA benchmarking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">CIA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>cia package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/modules_modified.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="section" id="cia-package">
+<h1>cia package<a class="headerlink" href="#cia-package" title="Permalink to this headline"></a></h1>
+<div class="section" id="investigate">
+<h2>investigate<a class="headerlink" href="#investigate" title="Permalink to this headline"></a></h2>
+<p>A module which contains the functions to <strong>compute signature scores and automatically annotate cells accordingly</strong> (funtions: signature_score and signature_based_classification).</p>
+<span class="target" id="module-cia.investigate"></span><dl class="py function">
+<dt class="sig sig-object py" id="cia.investigate.signature_based_classification">
+<span class="sig-prename descclassname"><span class="pre">cia.investigate.</span></span><span class="sig-name descname"><span class="pre">signature_based_classification</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signatures_dict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">negative_markers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fast_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partial_classification</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">FC_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_score</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Class'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_proc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unassigned_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Unassigned'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cia/investigate.html#signature_based_classification"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cia.investigate.signature_based_classification" title="Permalink to this definition"></a></dt>
+<dd><p>Given a dictionary of gene signatures, this function exploits signature_score() to compute scaled score (with fast_mode=True) or Fold Change
+(FC) scores of each signature (signature score/randomic signature score) and it classifies each cell accordingly with the highest score
+value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<a class="reference external" href="https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0.dev7+gfd744d6)"><em>anndata.AnnData</em></a>) – an AnnData object.</p></li>
+<li><p><strong>signatures_dict</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – a dictionary having as keys the signature names and as values the gene signatures (lists of gene names).</p></li>
+<li><p><strong>negative_markers</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a><em> or </em><em>None</em>) – a dictionary having as keys the signature names and as values the lists of negative marker genes (lists of gene names).</p></li>
+<li><p><strong>fast_mode</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – if True the comparison with randomic genes is skipped.</p></li>
+<li><p><strong>partial_classification</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – Only when fast_mode is True it allows to specify if the signatures are expected to classify the whole dataset (False) or not (True).</p></li>
+<li><p><strong>n_iter</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – an integer to set the number of iterations performed to generate the random gene lists.</p></li>
+<li><p><strong>p</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a><em> or </em><em>None</em>) – if not None, p is a number that specifies the p-value above which the signature is not considered significant in the cell.</p></li>
+<li><p><strong>q</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a><em> or </em><em>None</em>) – if not None, q is a number (from 0 to 1) that specifies the quantile of a signature FC score values distribution, below which the signature is not considered expressed in the cell.</p></li>
+<li><p><strong>FC_threshold</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – a number that specifies the minimum FC score value to be considered.
+NB: the default value is 1, meaning that when the FC score is lower than 1 (the signature score is lower than the randomic one), the FC score value is set to 0.</p></li>
+<li><p><strong>new_score</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em> or </em><em>None</em>) – if not None, new_score specifies if raw scores in obs have to be substituted with FC score (“FC”) or p-values (“pval”).</p></li>
+<li><p><strong>obs_name</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – a string that specifies the AnnData obs name of the returned classification.</p></li>
+<li><p><strong>n_proc</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – an integer that specifies the number of processors to be used.</p></li>
+<li><p><strong>n_bins</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a>) – an integer that specifies the number of expression level bins in which dataset genes are divided.</p></li>
+<li><p><strong>unassigned_label</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – a string that specifies the label of unissigned cells.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3.9/library/exceptions.html#TypeError" title="(in Python v3.9)"><strong>TypeError</strong></a> – If n_iter is not an integer.
+    If p is not an integer or a float.
+    If q is not an integer or a float.
+    If FC_threshold is not an integer or a float.
+    If n_bins is not an integer.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3.9/library/exceptions.html#ValueError" title="(in Python v3.9)"><strong>ValueError</strong></a> – If q is not between 0 and 1.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3.9/library/exceptions.html#KeyError" title="(in Python v3.9)"><strong>KeyError</strong></a> – If a negative_markers key doesn’t match signatures_dict keys.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cia.investigate.signature_score">
+<span class="sig-prename descclassname"><span class="pre">cia.investigate.</span></span><span class="sig-name descname"><span class="pre">signature_score</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signatures_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">score_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'raw'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_array</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cia/investigate.html#signature_score"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cia.investigate.signature_score" title="Permalink to this definition"></a></dt>
+<dd><p>Given a collection of gene signatures, this function, for each signature, computes a score for each cell, which increases both when the number of expressed genes in the signature increases, and when the expression of these genes increases.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>signatures_dict</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – a dictionary having as keys the signature names and as values the gene signatures (lists of gene names).</p></li>
+<li><p><strong>data</strong> (<a class="reference external" href="https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0.dev7+gfd744d6)"><em>anndata.AnnData</em></a>) – an AnnData object.</p></li>
+<li><p><strong>score_mode</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – a string that specifies the type of scores to be computed. The accepted values are: “raw”, “scaled”, “log”, “log2” and “log10”.
+The “scaled” score is the raw score divided by the max value (scaled from 0 to 1). The other ones are the logarithm of the raw score with diffent base (e for log, 2 for log2 and 10 for log10).</p></li>
+<li><p><strong>return_array</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – a boolean that specifies if the scores have to be returned as a numpy.ndarray (True) or if each signature score must be added to data.obs (False).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>scores</strong> – a numpy.ndarray containing signature scores. NB: scores is returned only if return_array is True.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.23)">numpy.ndarray</a></p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3.9/library/exceptions.html#ValueError" title="(in Python v3.9)"><strong>ValueError</strong></a> – If score_mode is not one of these values:  [‘raw’, ‘scaled’, ‘log’, ‘log2’, ‘log10’].</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3.9/library/exceptions.html#TypeError" title="(in Python v3.9)"><strong>TypeError</strong></a> – If signatures_dict is not a dict.
+    If return_array is not a boolean.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="report">
+<h2>report<a class="headerlink" href="#report" title="Permalink to this headline"></a></h2>
+<p>A module which contains the functions to <strong>visualize score distributions</strong> in cell groups <strong>and classification performances</strong> with respect to a reference annotation (functions: group_composition, classification_metrics, grouped_classification_metrics and grouped_distributions).</p>
+<span class="target" id="module-cia.report"></span><dl class="py function">
+<dt class="sig sig-object py" id="cia.report.classification_metrics">
+<span class="sig-prename descclassname"><span class="pre">cia.report.</span></span><span class="sig-name descname"><span class="pre">classification_metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classification_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups_obs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cia/report.html#classification_metrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cia.report.classification_metrics" title="Permalink to this definition"></a></dt>
+<dd><p>Computes the main metrics of classification by comparing labels of cells classified with given methods (methods of interest) and labels assigned with a different one (reference method).
+NB: labels must be correspondent!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<a class="reference external" href="https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0.dev7+gfd744d6)"><em>anndata.AnnData</em></a>) – an AnnData object.</p></li>
+<li><p><strong>classification_obs</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em>(</em><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>)</em>) – a list of string specifying the AnnData.obs columns where the labels assigned by the methods of interest are stored.</p></li>
+<li><p><strong>groups_obs</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – a string specifying the AnnData.obs where the labels assigned by the reference method.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>report</strong> – a pandas.DataFame containing the overall sensitivity (SE), specificity (SP), precision (PR), accuracy (ACC) and F1-score (F1) of the selected classification methods.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.4.3)">pandas.DataFrame</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cia.report.group_composition">
+<span class="sig-prename descclassname"><span class="pre">cia.report.</span></span><span class="sig-name descname"><span class="pre">group_composition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classification_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns_order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Reds'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cia/report.html#group_composition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cia.report.group_composition" title="Permalink to this definition"></a></dt>
+<dd><p>Plots a heatmap showing the percentages of cells classified with a given method (method of interest) in cell groups defined with a different one (reference method).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<a class="reference external" href="https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0.dev7+gfd744d6)"><em>anndata.AnnData</em></a>) – an AnnData object.</p></li>
+<li><p><strong>classification_obs</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – a string specifying the AnnData.obs where the labels assigned by the method of interest are stored.</p></li>
+<li><p><strong>groups_obs</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – a string specifying the AnnData.obs where the labels assigned by the reference method are stored.</p></li>
+<li><p><strong>columns_order</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em>(</em><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>)</em>) – a list of strings with column names</p></li>
+<li><p><strong>cmap</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em> or </em><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.colors.Colormap.html#matplotlib.colors.Colormap" title="(in Matplotlib v3.5.2)"><em>matplotlib.colors.Colormap</em></a>) – the mapping from data values to color space.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cia.report.grouped_classification_metrics">
+<span class="sig-prename descclassname"><span class="pre">cia.report.</span></span><span class="sig-name descname"><span class="pre">grouped_classification_metrics</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classification_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups_obs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cia/report.html#grouped_classification_metrics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cia.report.grouped_classification_metrics" title="Permalink to this definition"></a></dt>
+<dd><p>Computes the main metrics of classification by comparing labels of cells classified with a given method (method of interest) and labels assigned with a different one (reference method) for each group defined by the latter.
+NB: labels must be correspondent!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<a class="reference external" href="https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0.dev7+gfd744d6)"><em>anndata.AnnData</em></a>) – an AnnData object.</p></li>
+<li><p><strong>classification_obs</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – a string specifying the AnnData.obs columns where the labels assigned by the method of interest are stored.</p></li>
+<li><p><strong>groups_obs</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – a string specifying the AnnData.obs where the labels assigned by the reference method.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>report</strong> – a pandas.DataFame containing the per-group sensitivity (SE), specificity (SP), precision (PR), accuracy (ACC) and F1-score (F1) of the selected classification method.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.4.3)">pandas.DataFrame</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cia.report.grouped_distributions">
+<span class="sig-prename descclassname"><span class="pre">cia.report.</span></span><span class="sig-name descname"><span class="pre">grouped_distributions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">columns_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Reds'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_medians</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cia/report.html#grouped_distributions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cia.report.grouped_distributions" title="Permalink to this definition"></a></dt>
+<dd><p>By selecting AnnData.obs columns, this function plots a heatmap showing the medians of their values in cell groups and it prints a statistical report. For each cell group, a two-sided Wilcoxon test is perfomed to evaluate if the distribution with the highest median is different from the others. For each selected AnnData.obs columns set of values, grouped by cell groups, a two-sided Mann-Whitney U test is performed to evaluate if the distribution in the cell group having the highest median is different from the other groups distributions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<a class="reference external" href="https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0.dev7+gfd744d6)"><em>anndata.AnnData</em></a>) – an AnnData object.</p></li>
+<li><p><strong>columns_obs</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em>(</em><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>)</em>) – a string specifying the AnnData.obs columns where the values of interest are stored.</p></li>
+<li><p><strong>groups_obs</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – a string specifying the AnnData.obs where the cell labels are stored.</p></li>
+<li><p><strong>cmap</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em> or </em><a class="reference external" href="https://matplotlib.org/stable/api/_as_gen/matplotlib.colors.Colormap.html#matplotlib.colors.Colormap" title="(in Matplotlib v3.5.2)"><em>matplotlib.colors.Colormap</em></a>) – the mapping from data values to color space.</p></li>
+<li><p><strong>scale_medians</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em> or </em><em>None</em>) – a parameter to set the scaling type of median values (None, ‘row-wise’, ‘column-wise’)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="utils">
+<h2>utils<a class="headerlink" href="#utils" title="Permalink to this headline"></a></h2>
+<p>A module which contains <strong>useful functions</strong>  which are <strong>not necessary to the main classification workflow</strong> (functions: signatures_similarity and filter_degs).</p>
+<span class="target" id="module-cia.utils"></span><dl class="py function">
+<dt class="sig sig-object py" id="cia.utils.filter_degs">
+<span class="sig-prename descclassname"><span class="pre">cia.utils.</span></span><span class="sig-name descname"><span class="pre">filter_degs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groupby</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uns_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rank_genes_groups'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'up'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logFC</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scores</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cia/utils.html#filter_degs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cia.utils.filter_degs" title="Permalink to this definition"></a></dt>
+<dd><p>A function that filters differentially expressed genes (DEGs) obtaied with scanpy.tl.rank_genes_groups.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<a class="reference external" href="https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0.dev7+gfd744d6)"><em>anndata.AnnData</em></a>) – an AnnData object.</p></li>
+<li><p><strong>groupby</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – a string that specifies the AnnData.obs column containing cell groups of the differential expression analysis.</p></li>
+<li><p><strong>uns_key</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – a string that specifies the AnnData.uns where differential expression analysis results are stored.</p></li>
+<li><p><strong>direction</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – a string that specifies if filtering-in above thersholds (“up”, to select upregulated genes) or below thresholds (“down”, to select down regulated genes).</p></li>
+<li><p><strong>logFC</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Log fold-change threshold.</p></li>
+<li><p><strong>scores</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a><em> or </em><em>None</em>) – Z score threshold.</p></li>
+<li><p><strong>perc</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Threshold of the percentage of expressing cell within the cell group.</p></li>
+<li><p><strong>mean</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#int" title="(in Python v3.9)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – Mean expression threshold.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>signatures_dict</strong> – a dictionary having as keys the cell group names and as values the filtered-in DEGs  (lists of gene names).</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)">dict</a></p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.9/library/exceptions.html#ValueError" title="(in Python v3.9)"><strong>ValueError</strong></a> – if direction is different from “up” or “down”.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cia.utils.signatures_similarity">
+<span class="sig-prename descclassname"><span class="pre">cia.utils.</span></span><span class="sig-name descname"><span class="pre">signatures_similarity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signatures_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'J'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cia/utils.html#signatures_similarity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cia.utils.signatures_similarity" title="Permalink to this definition"></a></dt>
+<dd><p>A function that computes the similary between gene signatures.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>signatures_dict</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#dict" title="(in Python v3.9)"><em>dict</em></a>) – a dictionary having as keys the signature names and as values the gene signatures (lists of gene names).</p></li>
+<li><p><strong>show</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – a string that specifies if similarities will be returned as Jaccard index (“J”) or as percentages of intersection (“%”).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>similarity</strong> – a pandas.DataFame containing the similarity of each pair of signatures.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.4.3)">pandas.DataFrame</a></p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.9/library/exceptions.html#ValueError" title="(in Python v3.9)"><strong>ValueError</strong></a> – if show is different from “J” or “%”.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="external">
+<h2>external<a class="headerlink" href="#external" title="Permalink to this headline"></a></h2>
+<p>A module which contains <strong>external code</strong> (functions: celltypist_majority_vote).</p>
+<span class="target" id="module-cia.external"></span><dl class="py function">
+<dt class="sig sig-object py" id="cia.external.celltypist_majority_vote">
+<span class="sig-prename descclassname"><span class="pre">cia.external.</span></span><span class="sig-name descname"><span class="pre">celltypist_majority_vote</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classification_obs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups_obs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_prop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unassigned_label</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Unassigned'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/cia/external.html#celltypist_majority_vote"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#cia.external.celltypist_majority_vote" title="Permalink to this definition"></a></dt>
+<dd><p>A function that wraps celltypist majority vote method. It extends the the more represented cell type label (predicted by a given method) to each reference cell groups.
+If reference cell groups are not provided it exploits scanpy.tl.leiden to over-clustering the dataset (this requires having ran scanpy.pp.neighbors or scanpy.external.pp.bbknn before).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<a class="reference external" href="https://anndata.readthedocs.io/en/latest/generated/anndata.AnnData.html#anndata.AnnData" title="(in anndata v0.9.0.dev7+gfd744d6)"><em>anndata.AnnData</em></a>) – an AnnData object.</p></li>
+<li><p><strong>classification_obs</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#list" title="(in Python v3.9)"><em>list</em></a><em>(</em><a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em>)</em>) – a string or a list of string specifying the AnnData.obs column/s where the labels assigned by the method/s of interest are stored.</p></li>
+<li><p><strong>groups_obs</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a><em> or </em><em>None</em>) – a string specifying the AnnData.obs where the labels assigned by the reference method are stored. If None a over-clustering step with leiden algorithm is performed.</p></li>
+<li><p><strong>min_prop</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/functions.html#float" title="(in Python v3.9)"><em>float</em></a>) – for the dominant cell type within a cell group, it represent e minimum proportion of cells required to support naming of the cell group by this cell type.
+(Default: 0, range: from 0 to 1)</p></li>
+<li><p><strong>unassigned_label</strong> (<a class="reference external" href="https://docs.python.org/3.9/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – a string that specifies the label to assign to those cell groups in which none of the cell types reached the minimum proportion.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tutorial/workflow/Cluster_Independent_Annotation.html" class="btn btn-neutral float-right" title="CLUSTER INDEPENDENT ANNOTATION" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, National Institue of Molecular Genetics (INGM).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

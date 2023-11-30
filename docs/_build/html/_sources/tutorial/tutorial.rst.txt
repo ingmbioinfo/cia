@@ -1,0 +1,2038 @@
+CLUSTERING INDEPENDENT ANNOTATION
+=================================
+
+**Clustering Independent Annotation** (**CIA**) is a classification
+method meant to **help researchers in the cluster annotation step** of
+scRNA-seq experiments. Exploiting two functions, given cell type
+signatures as input, **this classifier computes a signature score for
+each cell** (**signature_score**) **and** (with different modalities)
+**it compares the score values in order to assign a label to each single
+cell** (**signature_based_classification**).
+
+This tool provides several advantages:
+
+-  It synthesizes the information of **a whole signature expression in a
+   single score value**, skipping the tedious one by one inspection of
+   single marker genes taken from long differentially expressed genes
+   (DEGs) lists, which furthermore may not be cluster specific when
+   taken singularly.
+
+-  It provides a classification for each cell that is **completely
+   independent from clustering**, thus, it can be used in parallel with
+   a clustering method in order to set a proper resolution value,
+   obtaining so coherent and easy to annotate cell groups.
+
+-  Given the implemented modalities, **it can be very fast** and
+   classify a huge dataset (hundreds of thousands cell) in a bunch of
+   seconds, **or it can be statistically more reliable** exploiting the
+   comparison of obtained signature scores with randomic signature ones.
+   Since the latter method is of course computationally heavier, **we
+   implemented the possibility to parallelize processes**.
+
+-  Being signature-based, this tool can provide information about **any
+   kind of gene list with a biological meaning**, allowing also
+   functional annotation.
+
+-  Normalizing for the gene signature length, it enable the **comparison
+   of genesets with different length**, spanning **from tens to
+   thousands genes** (obviously with different significance).
+
+CIA is composed by **two modules**:
+
+-  **investigate**: a module which contains the functions to **compute
+   signature scores and automatically annotate cells accordingly**
+   (funtions: signature_score and signature_based_classification)
+-  **report**: a module which contains the functions to **visualize
+   classification performances** with respect to a reference annotation
+   (functions: group_composition, classification_metrics and
+   grouped_classification_metrics)
+
+In this tutorial is shown a **representative workflow** in which we
+exploited CIA functions to **annotate two scRNA-seq datasets** at
+cellular level starting from a set of gene signatures and to **evaluate
+the performances** with respect to a independent reference annotation.
+
+.. code:: ipython3
+
+    import numpy as np
+    import pandas as pd
+    import scanpy as sc
+    import seaborn as sns
+    import multiprocessing
+    from functools import partial
+    from scipy.sparse import issparse
+    from scipy import sparse
+    import time
+    from sklearn import metrics
+    from scipy import sparse
+
+.. code:: ipython3
+
+    from cia import investigate, report
+
+Extracting gene signatures from PBMC atlas
+------------------------------------------
+
+Our method requires as input an **AnnData** object and a **dictionary
+containing the names of the signatures** (e.g. cell type, cell state or
+cell phase) **as keys and corresponent gene names as values**. For
+demonstration purposes we decided to use as signatures the DEGs of Hao
+et al 2021
+`[1] <https://www.sciencedirect.com/science/article/pii/S0092867421005833>`__
+**PBMC atlas obained with CITE-seq method**. This dataset clusters have
+been **confidently annotated** exploiting “weighted-nearest neighbor”
+framework, an integrative analysis which takes into account both RNA and
+protein level information. This approach ensures that the extracted gene
+lists (RNA based only) are actually associated to a specific cell type.
+
+.. code:: ipython3
+
+    # to copy and gunzip the data
+    !cp ./data/atlas.h5ad.gz  ./data/copy_atlas.h5ad.gz
+    !gunzip ./data/copy_atlas.h5ad.gz
+
+.. code:: ipython3
+
+    # to read the atlas data
+    atlas= sc.read('./data/copy_atlas.h5ad')
+    atlas
+
+
+
+
+.. parsed-literal::
+
+    AnnData object with n_obs × n_vars = 161764 × 20729
+        obs: 'nCount_ADT', 'nFeature_ADT', 'nCount_RNA', 'nFeature_RNA', 'orig.ident', 'lane', 'donor', 'time', 'celltype.l1', 'celltype.l2', 'celltype.l3', 'Phase', 'nCount_SCT', 'nFeature_SCT', 'Cell type', 'Predicted cell type', 'B', 'CD4 T', 'CD8 T', 'DC', 'Mono', 'NK', 'Platelet', 'other T', 'Prediction p-val', 'Prediction fast mode', 'Prediction standard mode', 'Prediction q'
+        var: 'features'
+        uns: 'Cell type_colors', 'Predicted cell type_colors', 'Prediction fast mode_colors', 'Prediction p-val_colors', 'Prediction q_colors', 'Prediction standard mode_colors', 'celltype.l1_colors', 'neighbors', 'signature_based_classification'
+        obsm: 'X_apca', 'X_aumap', 'X_pca', 'X_spca', 'X_umap', 'X_wnn.umap'
+        varm: 'PCs', 'SPCA'
+        obsp: 'distances'
+
+
+
+.. code:: ipython3
+
+    # to remove the gunzipped data
+    !rm  ./data/copy_atlas.h5ad 
+
+.. code:: ipython3
+
+    # to set AnnData.raw
+    atlas.raw=atlas
+
+This dataset has been annotated at **3 different levels of
+granularity**. We focused on the coarser one both for visualization
+purposes and to facilitate the comparisons with other datasets annotated
+at lower resolution.
+
+.. code:: ipython3
+
+    sc.pl.umap(atlas, color='celltype.l1')
+
+.. code:: ipython3
+
+    sc.pl.umap(atlas, color=['celltype.l2', 'celltype.l3'], wspace=1)
+
+Since labels ‘other’ and ‘other T’ don’t refer to any cell type in
+particular we checked their identity in the higher resolution
+annotation.
+
+.. code:: ipython3
+
+    ax=sc.pl.umap(atlas, show=False )
+    sc.pl.umap(atlas[(atlas.obs['celltype.l2']=='gdT') | (atlas.obs['celltype.l2']=='MAIT') | 
+                     (atlas.obs['celltype.l2']=='dnT') | (atlas.obs['celltype.l2']=='Platelet')], color='celltype.l2', ax=ax)
+
+‘Other T’ cluster is composed by double negative T cells, gamma delta T
+cells and MAIT cells. ‘Other’ cluster is mainly composed by platelets
+and for this reason has been renamed ‘Platelet’.
+
+.. code:: ipython3
+
+    atlas.obs['Cell type']=atlas.obs['celltype.l1']
+
+.. code:: ipython3
+
+    # to rename clusters
+    atlas.obs['Cell type']=atlas.obs['Cell type'].cat.rename_categories(['B', 'CD4 T', 'CD8 T', 'DC', 'Mono', 'NK', 'Platelet', 'other T'])
+    atlas.uns['Cell type_colors']=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f']
+
+We performed **differential expression analysis** (**DEA**) on coarser
+resoluted clusters and we selected as DEGs genes having at least **1.5
+log2FC**, with minimal **mean of expression 0.25**, **z score 5** and at
+least **expressed in 40% of cells** within the cluster in order to
+obtain shorter but **more specific gene lists** than a usual DEA.
+
+.. code:: ipython3
+
+    # to read the gmt and create the dictionary of signatures
+    df=pd.read_csv('./data/DEGs.gmt', sep='\t', header=None).transpose()
+    df=df.rename(columns=df.iloc[0]).drop(df.index[0])
+    gmt={}
+    for i in df.columns:
+        gmt[i]=df[i].dropna().values.tolist()
+
+.. code:: ipython3
+
+    gmt.keys()
+
+
+
+
+.. parsed-literal::
+
+    dict_keys(['B', 'CD4 T', 'CD8 T', 'DC', 'Mono', 'NK', 'Platelet', 'other T'])
+
+
+
+.. code:: ipython3
+
+    for i in gmt.keys():
+        print(i + ' signature has '+ str(len(gmt[i])) +' genes')
+
+
+.. parsed-literal::
+
+    B signature has 112 genes
+    CD4 T signature has 36 genes
+    CD8 T signature has 12 genes
+    DC signature has 178 genes
+    Mono signature has 712 genes
+    NK signature has 102 genes
+    Platelet signature has 125 genes
+    other T signature has 30 genes
+
+
+We then assessed the overlap among lists and, **despite the more
+stringent DEA** , we found that **CD8 T and CD4 T cells** signatures
+show a similarity that is remarkably higher than similarities among all
+the other signatures (58.3% of DEGs shared with CD4 T). Furthermore we
+found that CD8 T list has similarity with other T list (41% of DEGs),
+and that also other T and NK lists are very similar (56%). The authors
+themselves claimed that those **populations are difficult to be
+effectively discriminated by scRNA-seq alone**, in particular CD8 T an
+CD4 T cells. Citing them *“We found that for CD8+ T cells, the most
+similar RNA neighbors often reflected a mix of CD8+ and CD4+ T cells (in
+the RNA KNN graph, there are a total of 944 incorrect edges that connect
+CD8+ to CD4+ T cells). By contrast, protein neighbors were predominantly
+correctly identified as CD8+ T cells (in the protein KNN graph, 12
+CD8+/CD4+ edges were identified)”*
+`[1] <https://www.sciencedirect.com/science/article/pii/S0092867421005833>`__.
+For this reason **we can’t consider those signatures completely
+specific** and so **we don’t expect to obtain an ideal classification
+for those clusters**.
+
+.. code:: ipython3
+
+    similarity={}
+    for i in gmt.keys():
+        values=[]
+        for j in gmt.keys():
+            values.append(len(np.intersect1d(gmt[i], gmt[j]))/len(np.union1d(gmt[i], gmt[j])))
+        similarity[i]=values
+        
+
+.. code:: ipython3
+
+    df=pd.DataFrame(similarity)
+    df.index= df.columns
+    df
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>B</th>
+          <th>CD4 T</th>
+          <th>CD8 T</th>
+          <th>DC</th>
+          <th>Mono</th>
+          <th>NK</th>
+          <th>Platelet</th>
+          <th>other T</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>B</th>
+          <td>1.000000</td>
+          <td>0.006803</td>
+          <td>0.000000</td>
+          <td>0.094340</td>
+          <td>0.018541</td>
+          <td>0.004695</td>
+          <td>0.008511</td>
+          <td>0.000000</td>
+        </tr>
+        <tr>
+          <th>CD4 T</th>
+          <td>0.006803</td>
+          <td>1.000000</td>
+          <td>0.170732</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.100000</td>
+        </tr>
+        <tr>
+          <th>CD8 T</th>
+          <td>0.000000</td>
+          <td>0.170732</td>
+          <td>1.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.017857</td>
+          <td>0.007353</td>
+          <td>0.135135</td>
+        </tr>
+        <tr>
+          <th>DC</th>
+          <td>0.094340</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>1.000000</td>
+          <td>0.089351</td>
+          <td>0.003584</td>
+          <td>0.016779</td>
+          <td>0.000000</td>
+        </tr>
+        <tr>
+          <th>Mono</th>
+          <td>0.018541</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.089351</td>
+          <td>1.000000</td>
+          <td>0.002463</td>
+          <td>0.026994</td>
+          <td>0.000000</td>
+        </tr>
+        <tr>
+          <th>NK</th>
+          <td>0.004695</td>
+          <td>0.000000</td>
+          <td>0.017857</td>
+          <td>0.003584</td>
+          <td>0.002463</td>
+          <td>1.000000</td>
+          <td>0.017937</td>
+          <td>0.147826</td>
+        </tr>
+        <tr>
+          <th>Platelet</th>
+          <td>0.008511</td>
+          <td>0.000000</td>
+          <td>0.007353</td>
+          <td>0.016779</td>
+          <td>0.026994</td>
+          <td>0.017937</td>
+          <td>1.000000</td>
+          <td>0.006494</td>
+        </tr>
+        <tr>
+          <th>other T</th>
+          <td>0.000000</td>
+          <td>0.100000</td>
+          <td>0.135135</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.147826</td>
+          <td>0.006494</td>
+          <td>1.000000</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+Since **signature refinement is not the intent** of this method and of
+this tutorial, and **it should be done upstream** the
+annotation/classification step we proceeded using the above described
+signatures to show the usages of the proposed functions, and to report
+the automatic annotation performances.
+
+Signature score
+---------------
+
+signature_score function is **based on “gene signature score”**
+calculation method shown in Della Chiara, Gervasoni, Fakiola, Godano et
+al. 2021 `[2] <https://www.nature.com/articles/s41467-021-22544-y>`__.
+Given a collection of gene signatures, this function, for each
+signature, **computes a score for each cell**, **which depends on the
+proportion of genes in the cells also found in the signature and their
+expression. In this way it is possible to**\ summarize the expression of
+a whole gene signature in a single value for each cell**, enabling
+researchers to easily study its distribution in the dataset.
+
+To be more clear, the gene signature score was obtained in the following
+way:
+
+-  given a cell C defined as a vector of gene expression values
+   :math:`[{g}_{i},\ldots ,{g}_{C}]` and a geneset
+   :math:`{\bf{G}}=\{{g}_{1},\ldots ,{g}_{G}\}`
+
+-  a coexpression score is calculated as:
+
+:math:`coexpression\_{score}=\frac{{\sum }_{g\in {\bf{G}}}[{\bf{C}}g \,> \, 0]}{|{\bf{G}}|}`
+
+-  an expression score is defined as:
+
+:math:`expression\_{score}=\frac{{\sum }_{g\in {\bf{G}}}{\bf{C}}g}{\sum {\bf{C}}}`
+
+-  the two scores are then combined to yeld the gene signature score:
+
+:math:`gene\_{signature}\_{score}=coexpression\_{score}* expression\_{score}`
+
+Raw score
+~~~~~~~~~
+
+The raw score is the very same score described in the above mentioned
+paper, it’s the **default score_mode** in signature_score function.
+
+.. code:: ipython3
+
+    investigate.signature_score(data=atlas, signatures_dict=gmt, score_mode='raw')
+
+**Signature scores are stored by default in AnnData.obs**, adding a
+column for each signature named accordingly to the signature name.
+
+.. code:: ipython3
+
+    gmt.keys()
+
+.. code:: ipython3
+
+    atlas.obs[gmt.keys()]
+
+Signature scores **can be directly returned as an array** by specifying
+return_array=True.
+
+.. code:: ipython3
+
+    investigate.signature_score(data=atlas, signatures_dict=gmt, score_mode='raw', return_array=True)
+
+Scaled score
+~~~~~~~~~~~~
+
+Scaled score is the **raw score divided by max score value** for that
+given signature, operation which rescales the values from 0 to 1. Scaled
+scores of **different signatures**, with **different length**, can thus
+be **directly compared**. To compute the ‘scaled’ score score_mode must
+be set as ‘scaled’.
+
+.. code:: ipython3
+
+    investigate.signature_score(data=atlas, signatures_dict=gmt, score_mode='scaled')
+
+.. code:: ipython3
+
+    sc.pl.umap(atlas, color='Cell type')
+
+By inspecting the score values, for all the signatures, **the highest
+values are found in the proper cluster**, indicating the sensitivity of
+the signatures and the capablity of the signature score to represent the
+expression of the whole gene lists. **CD4 T and CD8 T scores**, as
+expected, **show an overlap reflecting their similarity**. In particular
+**both** signatures are **highly expressed in CD8 naive subcluster**.
+
+.. code:: ipython3
+
+    sc.pl.umap(atlas, color=gmt.keys(), color_map='Reds')
+
+.. code:: ipython3
+
+    atlas[(atlas.obs['celltype.l1']=='CD8 T')&(atlas.obs['celltype.l2']!='CD8 Naive')].obs[gmt.keys()]
+
+.. code:: ipython3
+
+    ax=sc.pl.umap(atlas, show=False )
+    sc.pl.umap(atlas[(atlas.obs['celltype.l2']=='CD8 Naive')], color='celltype.l2', ax=ax)
+
+Inspecting the violin plots showing the **distribution of score values**
+it’s easy to notice that **there is a cluster in which values are higher
+than all the other**. This is sufficient to help researchers in an
+eventual annotation, permitting to **skip the one-by-one evaluation** of
+DEGs reported in literature as marker genes.
+
+.. code:: ipython3
+
+    sc.pl.violin(atlas, keys=gmt.keys(), groupby='Cell type')
+
+
+
+.. image:: output_48_0.png
+
+
+Test dataset
+------------
+
+In order **to evaluate both the consistency** of our method **and the
+performances of classification**,\ **we used** the PMBC atlas **DEGs to
+automatically annotate** the well characterised
+`PBMC3K <https://scanpy.readthedocs.io/en/stable/generated/scanpy.datasets.pbmc3k.html>`__
+from Satija et al. 2015
+`[3] <https://www.nature.com/articles/nbt.3192>`__. This dataset was
+annotated relying on clustering and marker genes expression inspection
+and it is widely used as reference in the scientific community. **We
+classified** this dataset **independently from the already present
+annotation**, whose **cell labels were used as ground truth** to
+evaluate our classification perfomances with different modalities.
+
+.. code:: ipython3
+
+    pbmc3k = sc.read('./data/pbmc3k.h5ad')
+
+For the classification of the test dataset **we excluded ‘other T’
+signature** since this population was not annotated by the authors. **We
+also renamed and merged some clusters** in order to make easier the
+comparison and the visualization of results. In particular,‘CD14+
+Monocytes’ and ‘FCGR3A+ Monocytes’ clusters were merged into ‘Mono’.
+
+.. code:: ipython3
+
+    gmtc=gmt.copy()
+    del gmtc['other T'] # not annotated in test datasets
+
+.. code:: ipython3
+
+    sc.pl.umap(pbmc3k, color=['louvain','Cell type'], wspace=0.5)
+
+Signature-based classification
+------------------------------
+
+To classify both PBMC atlas and test datasets we used
+**signature_based_classification**. This function exploits
+*signature_score* to **compute scaled scores** (fast_mode=True) **or
+Fold Change (FC) scores** of each signature (signature score/randomic
+signature score) **and it classifies each cell** accordingly with the
+highest score value.
+
+**Two** main classification **modalities** have been implemented: a
+**fast classification mode**, in which scaled scores are directly
+computed and compared, and a **FC score-based mode** that, relying on
+the comparison between raw signature scores and randomic signature
+scores, can provide a more confident classification at the cost of
+computation time.
+
+Fast classification
+~~~~~~~~~~~~~~~~~~~
+
+Fast classification is performed by **assigning to each cell the label
+of the signature with the max scaled score value**. Being based on
+matrices and vectors operations this computation resulted to be **very
+fast** (in the used dataset with 161764 cells, they were classified with
+the high-performance computing server infrastructure of our institute).
+
+.. code:: ipython3
+
+    investigate.signature_based_classification(data=atlas, signatures_dict=gmt, fast_mode=True, obs_name='Prediction fast mode')
+
+
+.. parsed-literal::
+
+    
+    Classification labels added in AnnData.obs["Prediction fast mode"]
+    
+    Runtime of the process is 20.92 s 
+
+
+
+
+.. parsed-literal::
+
+    'Fast classification complete!'
+
+
+
+.. code:: ipython3
+
+    atlas.uns['Prediction fast mode_colors']=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b',
+           '#e377c2', '#7f7f7f']
+
+By inspecting and comparing the ground truth and the predicted labels is
+evident that, as expected, **the vast majority of the cells was
+correctly classified**. The major difference, given the CD4/CD8
+trancriptional overlap clearly reported in the atlas study, is found in
+CD8 T cluster, specifically in the **CD8 Naive subcluster which is
+mostly classified as CD4**.
+
+.. code:: ipython3
+
+    sc.pl.umap(atlas, color=['Cell type','Prediction fast mode'],  palette=None,  wspace=0.5)
+
+
+.. parsed-literal::
+
+    /mnt/home/ferrari/jupyterminiconda492/envs/scanpy1.8.2/lib/python3.9/site-packages/anndata/_core/anndata.py:1228: FutureWarning: The `inplace` parameter in pandas.Categorical.reorder_categories is deprecated and will be removed in a future version. Reordering categories will always return a new Categorical object.
+      c.reorder_categories(natsorted(c.categories), inplace=True)
+    ... storing 'Prediction fast mode' as categorical
+
+
+
+.. image:: output_62_1.png
+
+
+However **in each cluster the highest percentage of cell composition is
+given by the expected cell type**, which is (with the exception of CD8 T
+cluster, a lot higher than then the second most high.
+
+.. code:: ipython3
+
+    report.group_composition(atlas, classification_obs='Prediction fast mode', groups_obs='Cell type',
+                      columns_order=['B', 'CD4 T', 'CD8 T', 'DC', 'Mono', 'NK', 'Platelet', 'other T'])
+
+
+
+.. image:: output_64_0.png
+
+
+Because of the previously described **issues of CD4 T and CD8 T**, we
+decided to **re-label the cells** assigned to these two types with
+another round of classification **using only the distinctive markers**
+of the two populations: CD4 for CD4 T cells and CD8A and CD8B for CD8 T
+cells. Unassigned cells were not reassigned.
+
+.. code:: ipython3
+
+    CD4_CD8=atlas[(atlas.obs['Prediction fast mode']=='CD4 T')|(atlas.obs['Prediction fast mode']=='CD8 T')].copy()
+
+.. code:: ipython3
+
+    CD4_CD8_gmt={'CD4 T': ['CD4'],'CD8 T': ['CD8A', 'CD8B']}
+
+.. code:: ipython3
+
+    investigate.signature_based_classification(data=CD4_CD8, signatures_dict=CD4_CD8_gmt, fast_mode=True, obs_name='Adjusted prediction fast mode')
+
+
+.. parsed-literal::
+
+    
+    Classification labels added in AnnData.obs["Adjusted prediction fast mode"]
+    
+    Runtime of the process is 1.22 s 
+
+
+
+
+.. parsed-literal::
+
+    'Fast classification complete!'
+
+
+
+.. code:: ipython3
+
+    CD4_CD8.uns['Adjusted prediction fast mode_colors']=['#ff7f0e','#2ca02c', '#bcbd22']
+
+.. code:: ipython3
+
+    sc.pl.umap(CD4_CD8, color=['Cell type', 'Prediction fast mode','Adjusted prediction fast mode'])
+
+
+.. parsed-literal::
+
+    /mnt/home/ferrari/jupyterminiconda492/envs/scanpy1.8.2/lib/python3.9/site-packages/anndata/_core/anndata.py:1228: FutureWarning: The `inplace` parameter in pandas.Categorical.reorder_categories is deprecated and will be removed in a future version. Reordering categories will always return a new Categorical object.
+      c.reorder_categories(natsorted(c.categories), inplace=True)
+    ... storing 'Adjusted prediction fast mode' as categorical
+
+
+
+.. image:: output_70_1.png
+
+
+.. code:: ipython3
+
+    sc.pl.umap(atlas,color=['Cell type', 'Prediction fast mode','Adjusted prediction fast mode'])
+
+
+
+.. image:: output_71_0.png
+
+
+As expected, the reclassification with only 3 genes greatly improved the
+precision of CD8 T cells labelling.
+
+With the very same procedure we classified the PBMC3K dataset using the
+atlas derived signature.
+
+.. code:: ipython3
+
+    investigate.signature_based_classification(data=pbmc3k, signatures_dict=gmtc, fast_mode=True, obs_name='Prediction fast mode')
+
+
+.. parsed-literal::
+
+    14/112 of "B" signature genes were removed since they are not in AnnData.raw.var_names
+    3/36 of "CD4 T" signature genes were removed since they are not in AnnData.raw.var_names
+    2/12 of "CD8 T" signature genes were removed since they are not in AnnData.raw.var_names
+    5/178 of "DC" signature genes were removed since they are not in AnnData.raw.var_names
+    25/712 of "Mono" signature genes were removed since they are not in AnnData.raw.var_names
+    3/102 of "NK" signature genes were removed since they are not in AnnData.raw.var_names
+    9/125 of "Platelet" signature genes were removed since they are not in AnnData.raw.var_names
+    
+    Classification labels added in AnnData.obs["Prediction fast mode"]
+    
+    Runtime of the process is 0.28 s 
+
+
+
+
+.. parsed-literal::
+
+    'Fast classification complete!'
+
+
+
+.. code:: ipython3
+
+    pbmc3k.uns['Prediction fast mode_colors']=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2']
+
+.. code:: ipython3
+
+    sc.pl.umap(pbmc3k, color=['Cell type','Prediction fast mode'],  palette=None,  wspace=0.5, s=70)
+
+
+.. parsed-literal::
+
+    /mnt/home/ferrari/jupyterminiconda492/envs/scanpy1.8.2/lib/python3.9/site-packages/anndata/_core/anndata.py:1228: FutureWarning: The `inplace` parameter in pandas.Categorical.reorder_categories is deprecated and will be removed in a future version. Reordering categories will always return a new Categorical object.
+      c.reorder_categories(natsorted(c.categories), inplace=True)
+    ... storing 'Prediction fast mode' as categorical
+
+
+
+.. image:: output_76_1.png
+
+
+An **analogue situation was found also in PBMC3K**, where again most of
+the cells have been correctly assigned, indicating that **PBMC atlas
+signatures can be used to classify other datasets**.
+
+.. code:: ipython3
+
+    report.group_composition(pbmc3k, classification_obs='Prediction fast mode', groups_obs='Cell type',
+                      columns_order=['CD4 T', 'B', 'CD8 T', 'NK', 'Mono', 'DC', 'Platelet'])
+
+
+
+.. image:: output_78_0.png
+
+
+We reclassified the cells labelled as CD4 T and CD8 T cells in PBMC3K
+relying CD4, CD8A and CD8B expression.
+
+.. code:: ipython3
+
+    CD4_CD8=pbmc3k[(pbmc3k.obs['Prediction fast mode']=='CD4 T')|(pbmc3k.obs['Prediction fast mode']=='CD8 T')].copy()
+    investigate.signature_based_classification(data=CD4_CD8, signatures_dict=CD4_CD8_gmt, fast_mode=True, obs_name='Adjusted prediction fast mode')
+    CD4_CD8.uns['Adjusted prediction fast mode_colors']=['#ff7f0e','#2ca02c', '#bcbd22']
+    CD4_CD8.uns['Prediction fast mode_colors']=['#ff7f0e','#2ca02c']
+    sc.pl.umap(CD4_CD8, color=['Cell type', 'Prediction fast mode','Adjusted prediction fast mode'])
+
+
+.. parsed-literal::
+
+    
+    Classification labels added in AnnData.obs["Adjusted prediction fast mode"]
+    
+    Runtime of the process is 0.04 s 
+
+
+.. parsed-literal::
+
+    /mnt/home/ferrari/jupyterminiconda492/envs/scanpy1.8.2/lib/python3.9/site-packages/anndata/_core/anndata.py:1228: FutureWarning: The `inplace` parameter in pandas.Categorical.reorder_categories is deprecated and will be removed in a future version. Reordering categories will always return a new Categorical object.
+      c.reorder_categories(natsorted(c.categories), inplace=True)
+    ... storing 'Adjusted prediction fast mode' as categorical
+
+
+
+.. image:: output_80_2.png
+
+
+Surprisingly, most of the previously CD4 T labelled cells were not
+assigned due to the lack of CD4 detection, while some of them were
+riassigned to CD8 T group.
+
+.. code:: ipython3
+
+    sc.pl.umap(pbmc3k,color=['Cell type', 'Prediction fast mode','Adjusted prediction fast mode'])
+
+
+
+.. image:: output_82_0.png
+
+
+.. code:: ipython3
+
+    report.group_composition(pbmc3k, classification_obs='Adjusted prediction fast mode', groups_obs='Cell type',
+                      columns_order=['CD4 T', 'B', 'CD8 T', 'NK', 'Mono', 'DC', 'Platelet'])
+
+
+
+.. image:: output_83_0.png
+
+
+We checked the expression of CD4, CD8A and CD8B genes across groups
+defined both by ground truth clustering-driven annotation and CIA-driven
+annotation. Surprisingly, relying on their annotation,we found that the
+percentage of CD8A and CD8B expressing cell was comparable with the
+percentage of CD4 T expressing cells of CD4 T cluster.
+
+.. code:: ipython3
+
+    sc.pl.dotplot(pbmc3k, var_names=['CD4', 'CD8A', 'CD8B'], groupby='Cell type')
+
+
+
+.. image:: output_85_0.png
+
+
+While for our adjusted annotation those percentages were consinstently
+reduced, suggesting that our clustering independent annotation was more
+precise while discriminating CD4 T / CD8 T cells than clustering-driven
+one reported in Satija et al. 2015
+`[3] <https://www.nature.com/articles/nbt.3192>`__.
+
+.. code:: ipython3
+
+    sc.pl.dotplot(pbmc3k, var_names=['CD4', 'CD8A', 'CD8B'], groupby='Adjusted prediction fast mode')
+
+
+
+.. image:: output_87_0.png
+
+
+FC score-based classification
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+FC score-based classification is performed by **looking for the max Fold
+Change score value for each cell instead of scaled score one**. FC score
+is computed by dividing the raw signatue score by the median of raw
+scores of a given number (n_iter) of **randomic signatures**. To
+generate randomic signatures, all genes of the dataset are ranked by
+their mean expression and are assigned to a given bin, and **for each
+signature gene a randomic gene of the same expression bin is taken**.
+
+Standard mode
+^^^^^^^^^^^^^
+
+Standard mode is performed with default parameters: all the **FC scores
+lower than 1 (randomic score < signature score) are turned into 0**, and
+if a cell has a FC score equal to 0 for all the signature it will not be
+assigned. This approach is slower with respect to fast mode and it could
+be affected by a **decrease of performances due to unassigned cells, but
+in this way the classified cells are labeled at higher confidence** and
+cells with low FCs (e.g. not fully differentiated) are not forced to be
+classified. To speed-up the process **it’s possible to parallelize** the
+computations allocating jobs to a given number of processors (n_proc).
+By setting **new_score=‘FC’**, **raw scores in AnnData.obs can be
+replaced by FC values**.
+
+With the same approach described for fast classification we classified
+both PBMC atlas and PBMC3K with the standard mode, adjusting again the
+CD4 T / CD8 T labelling with a second round of focused classification.
+
+.. code:: ipython3
+
+    investigate.signature_based_classification(data=atlas, signatures_dict=gmt, n_iter=500, n_proc=32,
+                                       obs_name='Prediction standard mode', new_score='FC' , FC_threshold= 1, n_bins=25, p=0.05)
+
+.. code:: ipython3
+
+    sc.pl.umap(atlas, color=gmtc.keys(), wspace=0.5, cmap='Reds')
+
+.. code:: ipython3
+
+    atlas.uns['Prediction standard mode_colors']= ['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#bcbd22','#7f7f7f']
+
+.. code:: ipython3
+
+    sc.pl.umap(atlas,color=['Cell type', 'Prediction standard mode','Adjusted prediction standard mode'])
+
+
+
+.. image:: output_96_0.png
+
+
+.. code:: ipython3
+
+    report.group_composition(atlas, classification_obs='Adjusted prediction standard mode', groups_obs='Cell type',
+                      columns_order=['B', 'CD4 T', 'CD8 T', 'DC', 'Mono', 'NK', 'Platelet', 'other T', 'Unassigned'])
+
+
+
+.. image:: output_97_0.png
+
+
+.. code:: ipython3
+
+    investigate.signature_based_classification(data=pbmc3k, signatures_dict=gmtc,
+                        n_iter=500, n_proc=32,  new_score='FC', obs_name='Prediction standard mode', FC_threshold= 1, n_bins=25)
+
+.. code:: ipython3
+
+    sc.pl.umap(pbmc3k, color=gmtc.keys(), wspace=0.5, cmap='Reds')
+
+.. code:: ipython3
+
+    pbmc3k.uns['Prediction standard mode_colors']=['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#bcbd22']
+
+.. code:: ipython3
+
+    sc.pl.umap(pbmc3k,color=['Cell type', 'Prediction standard mode','Adjusted prediction standard mode'])
+
+
+
+.. image:: output_101_0.png
+
+
+.. code:: ipython3
+
+    report.group_composition(pbmc3k, classification_obs='Adjusted prediction standard mode', groups_obs='Cell type',
+                      columns_order=['CD4 T', 'B', 'CD8 T', 'NK', 'Mono', 'DC', 'Platelet'])
+
+
+
+.. image:: output_102_0.png
+
+
+**No major differences have been detected** from fast to standard
+classification, suggesting a per se validity of scaled score to perform
+a fast explorative cell type prediction.
+
+Quantile-based filtering mode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Quantile based filter adds another layer of stringency** to the
+classification by acting on FC distributions. By setting q equal to a
+number from 0 to 1, all the FC score values below that given quantile
+are set 0. In this way **only the highest values of FC are mainteined
+and so only the most signature-expressing cells will be classified**.
+This could be very useful in case of bimodal distribution of score
+values or when a signature is moderately expressed in all the clusters.
+
+.. code:: ipython3
+
+    investigate.signature_based_classification(data=atlas, signatures_dict=gmt,
+                        n_iter=500, n_proc=32, obs_name='Prediction q', q=0.5, n_bins=25)
+
+.. code:: ipython3
+
+    atlas.uns['Prediction q_colors']=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', 
+                                      '#bcbd22', '#7f7f7f']
+
+.. code:: ipython3
+
+    sc.pl.umap(atlas,color=['Cell type', 'Prediction q','Adjusted prediction q'])
+
+
+
+.. image:: output_108_0.png
+
+
+.. code:: ipython3
+
+    report.group_composition(atlas, classification_obs='Adjusted prediction q', groups_obs='Cell type',
+                      columns_order=['B', 'CD4 T', 'CD8 T', 'DC', 'Mono', 'NK', 'Platelet', 'other T', 'Unassigned'])
+
+
+
+.. image:: output_109_0.png
+
+
+.. code:: ipython3
+
+    investigate.signature_based_classification(data=pbmc3k, signatures_dict=gmtc,
+                        n_iter=500, n_proc=32, obs_name='Prediction q', q=0.33, n_bins=25)
+
+.. code:: ipython3
+
+    pbmc3k.uns['Prediction q_colors']=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#bcbd22']
+
+.. code:: ipython3
+
+    sc.pl.umap(pbmc3k, color=['Cell type','Prediction q'],  palette=None,  wspace=0.5, s=70)
+
+.. code:: ipython3
+
+    sc.pl.umap(pbmc3k,color=['Cell type', 'Prediction q','Adjusted prediction q'])
+
+
+
+.. image:: output_113_0.png
+
+
+.. code:: ipython3
+
+    report.group_composition(pbmc3k, classification_obs='Adjusted prediction q', groups_obs='Cell type',
+                      columns_order=['CD4 T', 'B', 'CD8 T', 'NK', 'Mono', 'DC', 'Platelet', 'Unassigned'])
+
+
+
+.. image:: output_114_0.png
+
+
+Again, **no major differences have been found**, indicating the
+consistency of the signatures. As expected the most variant cluster is
+CD8 T which as mentioned before has not a specific signature (17% of
+shared genes with CD4 T).
+
+p value-based filtering mode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**The most stringent level of classification** is given by p-val mode.
+As mentioned before, FC score is obtained by dividing raw signature
+scores for the median of scores of n_iter \* randomic signatures. **For
+each signature, for each cell, a p-value is calculated by counting how
+many times random signature values are higher than gene signature one
+(all divided by n_inter)**. If p-value is higher than the set p the FC
+score of that cell for that signature will become 0. In this way **only
+the significantly signature-expressing cells will be assigned**.
+
+.. code:: ipython3
+
+    investigate.signature_based_classification(data=atlas, signatures_dict=gmt,
+                        n_iter=500, n_proc=32, obs_name='Prediction p-val', p=0.05, n_bins=25, new_score='FC')
+
+
+.. parsed-literal::
+
+    
+    WARNING: Dear, pay attention!
+    If you use a number of bins higher or equal to  15 , you may not have enough random genes in a bin. 
+    So we suggest you to reduce 'n_bins'.
+    
+    Checking for genes not in AnnData.raw.var_names ...
+    
+    All signature genes are in AnnData.raw.var_names
+    
+    Computing raw signature scores ...
+    
+    "B" added in Anndata.obs
+    "CD4 T" added in Anndata.obs
+    "CD8 T" added in Anndata.obs
+    "DC" added in Anndata.obs
+    "Mono" added in Anndata.obs
+    "NK" added in Anndata.obs
+    "Platelet" added in Anndata.obs
+    "other T" added in Anndata.obs
+
+
+Beside the possibility to substitute raw score values in AnnData.obs, by
+default **both FC scores and p-values are stored in AnnData.uns**.
+
+.. code:: ipython3
+
+    df=atlas.uns["signature_based_classification"]
+    df
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>B_FC</th>
+          <th>CD4 T_FC</th>
+          <th>CD8 T_FC</th>
+          <th>DC_FC</th>
+          <th>Mono_FC</th>
+          <th>NK_FC</th>
+          <th>Platelet_FC</th>
+          <th>other T_FC</th>
+          <th>B_filtered_FC</th>
+          <th>CD4 T_filtered_FC</th>
+          <th>...</th>
+          <th>Platelet_filtered_FC</th>
+          <th>other T_filtered_FC</th>
+          <th>B_pval</th>
+          <th>CD4 T_pval</th>
+          <th>CD8 T_pval</th>
+          <th>DC_pval</th>
+          <th>Mono_pval</th>
+          <th>NK_pval</th>
+          <th>Platelet_pval</th>
+          <th>other T_pval</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>0</th>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>3.084554</td>
+          <td>2.946375</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>...</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.896</td>
+          <td>1.000</td>
+          <td>1.000</td>
+          <td>0.000</td>
+          <td>0.0</td>
+          <td>1.000</td>
+          <td>0.218</td>
+          <td>1.000</td>
+        </tr>
+        <tr>
+          <th>1</th>
+          <td>0.000000</td>
+          <td>3.559373</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>3.559373</td>
+          <td>...</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>1.000</td>
+          <td>0.000</td>
+          <td>0.184</td>
+          <td>1.000</td>
+          <td>1.0</td>
+          <td>0.988</td>
+          <td>0.946</td>
+          <td>0.876</td>
+        </tr>
+        <tr>
+          <th>2</th>
+          <td>0.000000</td>
+          <td>2.869017</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>2.869017</td>
+          <td>...</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.982</td>
+          <td>0.000</td>
+          <td>0.050</td>
+          <td>1.000</td>
+          <td>1.0</td>
+          <td>1.000</td>
+          <td>0.780</td>
+          <td>0.966</td>
+        </tr>
+        <tr>
+          <th>3</th>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>5.808615</td>
+          <td>0.000000</td>
+          <td>2.915838</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>...</td>
+          <td>0.000000</td>
+          <td>2.915838</td>
+          <td>1.000</td>
+          <td>1.000</td>
+          <td>0.848</td>
+          <td>1.000</td>
+          <td>1.0</td>
+          <td>0.000</td>
+          <td>0.656</td>
+          <td>0.000</td>
+        </tr>
+        <tr>
+          <th>4</th>
+          <td>0.000000</td>
+          <td>2.123207</td>
+          <td>2.683345</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>2.123207</td>
+          <td>...</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>1.000</td>
+          <td>0.008</td>
+          <td>0.012</td>
+          <td>1.000</td>
+          <td>1.0</td>
+          <td>0.998</td>
+          <td>0.822</td>
+          <td>0.956</td>
+        </tr>
+        <tr>
+          <th>...</th>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+          <td>...</td>
+        </tr>
+        <tr>
+          <th>161759</th>
+          <td>0.000000</td>
+          <td>2.848472</td>
+          <td>2.028551</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>2.848472</td>
+          <td>...</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>1.000</td>
+          <td>0.000</td>
+          <td>0.038</td>
+          <td>1.000</td>
+          <td>1.0</td>
+          <td>1.000</td>
+          <td>0.980</td>
+          <td>0.904</td>
+        </tr>
+        <tr>
+          <th>161760</th>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>1.513392</td>
+          <td>3.186652</td>
+          <td>0.000000</td>
+          <td>1.366979</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>...</td>
+          <td>1.366979</td>
+          <td>0.000000</td>
+          <td>0.882</td>
+          <td>1.000</td>
+          <td>1.000</td>
+          <td>0.000</td>
+          <td>0.0</td>
+          <td>1.000</td>
+          <td>0.044</td>
+          <td>1.000</td>
+        </tr>
+        <tr>
+          <th>161761</th>
+          <td>7.065259</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>7.065259</td>
+          <td>0.000000</td>
+          <td>...</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000</td>
+          <td>1.000</td>
+          <td>1.000</td>
+          <td>0.156</td>
+          <td>1.0</td>
+          <td>1.000</td>
+          <td>0.904</td>
+          <td>1.000</td>
+        </tr>
+        <tr>
+          <th>161762</th>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>2.540124</td>
+          <td>2.372090</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>...</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.920</td>
+          <td>1.000</td>
+          <td>1.000</td>
+          <td>0.000</td>
+          <td>0.0</td>
+          <td>1.000</td>
+          <td>0.648</td>
+          <td>1.000</td>
+        </tr>
+        <tr>
+          <th>161763</th>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>1.938983</td>
+          <td>2.250394</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>...</td>
+          <td>0.000000</td>
+          <td>0.000000</td>
+          <td>0.996</td>
+          <td>1.000</td>
+          <td>1.000</td>
+          <td>0.000</td>
+          <td>0.0</td>
+          <td>1.000</td>
+          <td>0.370</td>
+          <td>1.000</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>161764 rows × 24 columns</p>
+    </div>
+
+
+
+.. code:: ipython3
+
+    df=df.iloc[:, 8:16]
+    df.index=atlas.obs.index
+    atlas.obs[df.columns]=df
+
+.. code:: ipython3
+
+    atlas.uns['Prediction p-val_colors']=['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#bcbd22','#7f7f7f']
+
+.. code:: ipython3
+
+    sc.pl.umap(atlas, color=['Cell type','Prediction p-val','Adjusted prediction p-val'],  palette=None,  wspace=0.5)
+
+
+
+.. image:: output_123_0.png
+
+
+.. code:: ipython3
+
+    sc.pl.violin(atlas, keys=df.columns,  groupby='Cell type')
+
+
+
+.. image:: output_124_0.png
+
+
+Also **with statistical significance**, in PBMC atlas, with the
+exception of CD4/CD8 T which are only slightly discriminated, the values
+of FC scores are higher in the expected cluster.
+
+.. code:: ipython3
+
+    report.group_composition(atlas, classification_obs='Adjusted prediction p-val', groups_obs='Cell type',
+                      columns_order=['B', 'CD4 T', 'CD8 T', 'DC', 'Mono', 'NK', 'Platelet', 'other T', 'Unassigned'])
+
+
+
+.. image:: output_126_0.png
+
+
+.. code:: ipython3
+
+    pbmc3k.uns['Prediction p-val_colors']=['#1f77b4','#ff7f0e','#2ca02c','#d62728','#9467bd','#8c564b','#e377c2','#bcbd22']
+
+.. code:: ipython3
+
+    investigate.signature_based_classification(data=pbmc3k, signatures_dict=gmtc,
+                        n_iter=500, n_proc=32, obs_name='Prediction p-val', p=0.05, n_bins=25, new_score='FC')
+
+
+.. parsed-literal::
+
+    
+    WARNING: Dear, pay attention!
+    If you use a number of bins higher or equal to  10 , you may not have enough random genes in a bin. 
+    So we suggest you to reduce 'n_bins'.
+    
+    Checking for genes not in AnnData.raw.var_names ...
+    
+    14/112 of "B" signature genes were removed since they are not in AnnData.raw.var_names
+    3/36 of "CD4 T" signature genes were removed since they are not in AnnData.raw.var_names
+    2/12 of "CD8 T" signature genes were removed since they are not in AnnData.raw.var_names
+    5/178 of "DC" signature genes were removed since they are not in AnnData.raw.var_names
+    25/712 of "Mono" signature genes were removed since they are not in AnnData.raw.var_names
+    3/102 of "NK" signature genes were removed since they are not in AnnData.raw.var_names
+    9/125 of "Platelet" signature genes were removed since they are not in AnnData.raw.var_names
+    
+    Computing raw signature scores ...
+    
+    "B" added in Anndata.obs
+    "CD4 T" added in Anndata.obs
+    "CD8 T" added in Anndata.obs
+    "DC" added in Anndata.obs
+    "Mono" added in Anndata.obs
+    "NK" added in Anndata.obs
+    "Platelet" added in Anndata.obs
+    
+    raw scores are being replaced by Fold Change signature scores ...
+    
+    
+    Classification labels added in AnnData.obs["Prediction p-val"]
+    
+    Results have been stored in AnnData.uns["signature_based_classification"]
+    
+    Runtime of the process is 3.26 min with 32 cores
+
+
+.. code:: ipython3
+
+    sc.pl.umap(pbmc3k, color=['Cell type','Prediction p-val', 'Adjusted prediction p-val'])
+
+
+.. parsed-literal::
+
+    /mnt/home/ferrari/jupyterminiconda492/envs/scanpy1.8.2/lib/python3.9/site-packages/anndata/_core/anndata.py:1228: FutureWarning: The `inplace` parameter in pandas.Categorical.reorder_categories is deprecated and will be removed in a future version. Reordering categories will always return a new Categorical object.
+      c.reorder_categories(natsorted(c.categories), inplace=True)
+    ... storing 'Prediction p-val' as categorical
+
+
+
+.. image:: output_129_1.png
+
+
+.. code:: ipython3
+
+    df=pbmc3k.uns['signature_based_classification']
+    df=df.iloc[:, 7:14]
+    df.index=pbmc3k.obs.index
+    pbmc3k.obs[df.columns]=df
+
+.. code:: ipython3
+
+    sc.pl.violin(pbmc3k, keys=df.columns,  groupby='Cell type')
+
+
+
+.. image:: output_131_0.png
+
+
+An analogue situation is found **in PBMC3K**, where **all the signatures
+are clearly more expressed in the expected cluster**.
+
+.. code:: ipython3
+
+    report.group_composition(pbmc3k, classification_obs='Adjusted prediction p-val', groups_obs='Cell type',
+                      columns_order=['CD4 T', 'B', 'CD8 T', 'NK', 'Mono', 'DC', 'Platelet', 'Unassigned'])
+
+
+
+.. image:: output_133_0.png
+
+
+Again, no majour differences were found with the statistically relevant
+p-value mode, suggesting the consistency of our classification method.
+
+Classification performance evaluation
+-------------------------------------
+
+To evaluate classification performances both overall and per-cluster we
+exploited respectively classification_metrics and
+grouped_classification_metrics.
+
+In both functions **cell labels assigned by CIA and the annotation
+already present in test datasets are compared** in order to count true
+positive (TP), true negative (TN), false positive (FP) and false
+negative (FN) cells for each cluster. Only for the overall calculation
+the per-cluster count of them is summed to obtain the total TN, TP, FN
+and FP. Then, again for both functions, the following metriacs are
+calculated: - **Sensitivity** (SE)= TP/(TP+FN) - **Specificity** (SP)=
+TN/(TN+FP) - **Precision** (PR)= TP/(TP+FP) - **Accuracy** (ACC)=
+(TN+TP)/(TN+TP+FN+FP) - **F1-score** (F1)= 2\ *TP/(2*\ TP+FN+FP)
+
+Here, for clarity, we show only the per cluster classification metrics
+of the statistically relevant p-value based method for both datasets.
+
+.. code:: ipython3
+
+    report.grouped_classification_metrics(atlas, classification_obs='Adjusted prediction p-val',groups_obs='Cell type')
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>SE</th>
+          <th>SP</th>
+          <th>PR</th>
+          <th>ACC</th>
+          <th>F1</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>B</th>
+          <td>0.998478</td>
+          <td>0.999601</td>
+          <td>0.995736</td>
+          <td>0.999505</td>
+          <td>0.997105</td>
+        </tr>
+        <tr>
+          <th>CD4 T</th>
+          <td>0.873149</td>
+          <td>0.952585</td>
+          <td>0.862110</td>
+          <td>0.932451</td>
+          <td>0.867595</td>
+        </tr>
+        <tr>
+          <th>CD8 T</th>
+          <td>0.565432</td>
+          <td>0.991628</td>
+          <td>0.926586</td>
+          <td>0.924526</td>
+          <td>0.702299</td>
+        </tr>
+        <tr>
+          <th>DC</th>
+          <td>0.994985</td>
+          <td>0.981660</td>
+          <td>0.551761</td>
+          <td>0.981955</td>
+          <td>0.709870</td>
+        </tr>
+        <tr>
+          <th>Mono</th>
+          <td>0.932402</td>
+          <td>0.996985</td>
+          <td>0.992615</td>
+          <td>0.977418</td>
+          <td>0.961566</td>
+        </tr>
+        <tr>
+          <th>NK</th>
+          <td>0.978890</td>
+          <td>0.971160</td>
+          <td>0.815734</td>
+          <td>0.972052</td>
+          <td>0.889896</td>
+        </tr>
+        <tr>
+          <th>Platelet</th>
+          <td>0.746078</td>
+          <td>0.997524</td>
+          <td>0.867568</td>
+          <td>0.992174</td>
+          <td>0.802249</td>
+        </tr>
+        <tr>
+          <th>other T</th>
+          <td>0.715717</td>
+          <td>0.963478</td>
+          <td>0.461926</td>
+          <td>0.953080</td>
+          <td>0.561474</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+.. code:: ipython3
+
+    report.grouped_classification_metrics(pbmc3k, classification_obs='Adjusted prediction p-val',groups_obs='Cell type')
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>SE</th>
+          <th>SP</th>
+          <th>PR</th>
+          <th>ACC</th>
+          <th>F1</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>CD4 T</th>
+          <td>0.708916</td>
+          <td>0.982597</td>
+          <td>0.968937</td>
+          <td>0.863912</td>
+          <td>0.818778</td>
+        </tr>
+        <tr>
+          <th>B</th>
+          <td>0.994152</td>
+          <td>0.997387</td>
+          <td>0.982659</td>
+          <td>0.996967</td>
+          <td>0.988372</td>
+        </tr>
+        <tr>
+          <th>CD8 T</th>
+          <td>0.696203</td>
+          <td>0.889320</td>
+          <td>0.461216</td>
+          <td>0.866187</td>
+          <td>0.554855</td>
+        </tr>
+        <tr>
+          <th>NK</th>
+          <td>0.980519</td>
+          <td>0.972625</td>
+          <td>0.689498</td>
+          <td>0.973086</td>
+          <td>0.809651</td>
+        </tr>
+        <tr>
+          <th>Mono</th>
+          <td>0.988889</td>
+          <td>0.995020</td>
+          <td>0.984202</td>
+          <td>0.993556</td>
+          <td>0.986540</td>
+        </tr>
+        <tr>
+          <th>DC</th>
+          <td>0.891892</td>
+          <td>0.997693</td>
+          <td>0.846154</td>
+          <td>0.996209</td>
+          <td>0.868421</td>
+        </tr>
+        <tr>
+          <th>Platelet</th>
+          <td>0.933333</td>
+          <td>0.993138</td>
+          <td>0.437500</td>
+          <td>0.992798</td>
+          <td>0.595745</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+And here are reported the **overall perfomances** of adjusted and
+non-adjusted classifications **for each method**:
+
+.. code:: ipython3
+
+    ## ADJUSTED
+
+.. code:: ipython3
+
+    report.classification_metrics(atlas, 
+                           classification_obs=['Adjusted prediction fast mode', 'Adjusted prediction standard mode', 'Adjusted prediction q', 'Adjusted prediction p-val'],
+                           groups_obs='Cell type')
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>SE</th>
+          <th>SP</th>
+          <th>PR</th>
+          <th>ACC</th>
+          <th>F1</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>Adjusted prediction fast mode</th>
+          <td>0.926090</td>
+          <td>0.989441</td>
+          <td>0.926090</td>
+          <td>0.981522</td>
+          <td>0.926090</td>
+        </tr>
+        <tr>
+          <th>Adjusted prediction standard mode</th>
+          <td>0.877123</td>
+          <td>0.984630</td>
+          <td>0.890741</td>
+          <td>0.971192</td>
+          <td>0.883880</td>
+        </tr>
+        <tr>
+          <th>Adjusted prediction q</th>
+          <td>0.887979</td>
+          <td>0.984072</td>
+          <td>0.888446</td>
+          <td>0.972060</td>
+          <td>0.888212</td>
+        </tr>
+        <tr>
+          <th>Adjusted prediction p-val</th>
+          <td>0.858936</td>
+          <td>0.982032</td>
+          <td>0.872272</td>
+          <td>0.966645</td>
+          <td>0.865553</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+.. code:: ipython3
+
+    report.classification_metrics(pbmc3k, 
+                           classification_obs=['Adjusted prediction fast mode', 'Adjusted prediction standard mode', 'Adjusted prediction q', 'Adjusted prediction p-val'],
+                           groups_obs='Cell type')
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>SE</th>
+          <th>SP</th>
+          <th>PR</th>
+          <th>ACC</th>
+          <th>F1</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>Adjusted prediction fast mode</th>
+          <td>0.859742</td>
+          <td>0.976624</td>
+          <td>0.859742</td>
+          <td>0.959926</td>
+          <td>0.859742</td>
+        </tr>
+        <tr>
+          <th>Adjusted prediction standard mode</th>
+          <td>0.826763</td>
+          <td>0.971127</td>
+          <td>0.826763</td>
+          <td>0.950504</td>
+          <td>0.826763</td>
+        </tr>
+        <tr>
+          <th>Adjusted prediction q</th>
+          <td>0.825625</td>
+          <td>0.971190</td>
+          <td>0.826879</td>
+          <td>0.950395</td>
+          <td>0.826252</td>
+        </tr>
+        <tr>
+          <th>Adjusted prediction p-val</th>
+          <td>0.830933</td>
+          <td>0.975297</td>
+          <td>0.848626</td>
+          <td>0.954673</td>
+          <td>0.839686</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+.. code:: ipython3
+
+    # NON-ADJUSTED
+
+.. code:: ipython3
+
+    report.classification_metrics(atlas, 
+                           classification_obs=['Prediction fast mode', 'Prediction standard mode', 'Prediction q', 'Prediction p-val'],
+                           groups_obs='Cell type')
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>SE</th>
+          <th>SP</th>
+          <th>PR</th>
+          <th>ACC</th>
+          <th>F1</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>Prediction fast mode</th>
+          <td>0.863091</td>
+          <td>0.980442</td>
+          <td>0.863091</td>
+          <td>0.965773</td>
+          <td>0.863091</td>
+        </tr>
+        <tr>
+          <th>Prediction standard mode</th>
+          <td>0.822457</td>
+          <td>0.976821</td>
+          <td>0.835226</td>
+          <td>0.957525</td>
+          <td>0.828793</td>
+        </tr>
+        <tr>
+          <th>Prediction q</th>
+          <td>0.831922</td>
+          <td>0.976064</td>
+          <td>0.832359</td>
+          <td>0.958046</td>
+          <td>0.832140</td>
+        </tr>
+        <tr>
+          <th>Prediction p-val</th>
+          <td>0.822086</td>
+          <td>0.976850</td>
+          <td>0.835337</td>
+          <td>0.957504</td>
+          <td>0.828659</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
+
+.. code:: ipython3
+
+    report.classification_metrics(pbmc3k, 
+                           classification_obs=['Prediction fast mode', 'Prediction standard mode', 'Prediction q', 'Prediction p-val'],
+                           groups_obs='Cell type')
+
+
+
+
+.. raw:: html
+
+    <div>
+    <style scoped>
+        .dataframe tbody tr th:only-of-type {
+            vertical-align: middle;
+        }
+    
+        .dataframe tbody tr th {
+            vertical-align: top;
+        }
+    
+        .dataframe thead th {
+            text-align: right;
+        }
+    </style>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th>SE</th>
+          <th>SP</th>
+          <th>PR</th>
+          <th>ACC</th>
+          <th>F1</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th>Prediction fast mode</th>
+          <td>0.907127</td>
+          <td>0.984521</td>
+          <td>0.907127</td>
+          <td>0.973465</td>
+          <td>0.907127</td>
+        </tr>
+        <tr>
+          <th>Prediction standard mode</th>
+          <td>0.835102</td>
+          <td>0.972517</td>
+          <td>0.835102</td>
+          <td>0.952886</td>
+          <td>0.835102</td>
+        </tr>
+        <tr>
+          <th>Prediction q</th>
+          <td>0.834344</td>
+          <td>0.972643</td>
+          <td>0.835611</td>
+          <td>0.952886</td>
+          <td>0.834977</td>
+        </tr>
+        <tr>
+          <th>Prediction p-val</th>
+          <td>0.831691</td>
+          <td>0.975486</td>
+          <td>0.849729</td>
+          <td>0.954944</td>
+          <td>0.840613</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+

@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cia.investigate &mdash; CIA 0.0.post1.dev32+g0664b3a.d20220702 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> CIA
+          </a>
+              <div class="version">
+                0.0.post1.dev32+g0664b3a.d20220702
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules_modified.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial/Cluster_Independent_Annotation.html">Tutorial: CIA workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">CIA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>cia.investigate</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for cia.investigate</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">anndata</span> <span class="kn">import</span> <span class="n">AnnData</span>
+<span class="kn">import</span> <span class="nn">time</span> 
+<span class="kn">import</span> <span class="nn">multiprocessing</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="kn">import</span> <span class="n">issparse</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">sparse</span>
+    
+<div class="viewcode-block" id="signature_score"><a class="viewcode-back" href="../../modules_modified.html#cia.investigate.signature_score">[docs]</a><span class="k">def</span> <span class="nf">signature_score</span><span class="p">(</span><span class="n">signatures_dict</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">score_mode</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">,</span> <span class="n">return_array</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>  
+
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">    Given a collection of gene signatures, this function, for each signature, computes a score for each cell, which increases both when the number of expressed genes in the signature increases, and when the expression of these genes increases.</span>
+<span class="sd">    </span>
+<span class="sd">           </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    </span>
+<span class="sd">    signatures_dict: dict</span>
+<span class="sd">        a dictionary having as keys the signature names and as values the gene signatures (lists of gene names).</span>
+<span class="sd">   </span>
+<span class="sd">    data: anndata.AnnData</span>
+<span class="sd">        an AnnData object.</span>
+<span class="sd">        </span>
+<span class="sd">    score_mode: str</span>
+<span class="sd">        a string that specifies the type of scores to be computed. The accepted values are: &quot;raw&quot;, &quot;scaled&quot;, &quot;log&quot;, &quot;log2&quot; and &quot;log10&quot;.</span>
+<span class="sd">        The &quot;scaled&quot; score is the raw score divided by the max value (scaled from 0 to 1). The other ones are the logarithm of the raw score with diffent base (e for log, 2 for log2 and 10 for log10).</span>
+<span class="sd">        </span>
+<span class="sd">    return_array: bool</span>
+<span class="sd">        a boolean that specifies if the scores have to be returned as a numpy.ndarray (True) or if each signature score must be added to data.obs (False).</span>
+<span class="sd">        </span>
+<span class="sd">    </span>
+<span class="sd">     </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    </span>
+<span class="sd">    scores: numpy.ndarray</span>
+<span class="sd">        a numpy.ndarray containing signature scores. NB: scores is returned only if return_array is True.</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    </span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If score_mode is not one of these values:  [&#39;raw&#39;, &#39;scaled&#39;, &#39;log&#39;, &#39;log2&#39;, &#39;log10&#39;].</span>
+<span class="sd">        </span>
+<span class="sd">    TypeError</span>
+<span class="sd">        If signatures_dict is not a dict.</span>
+<span class="sd">        If return_array is not a boolean. </span>
+
+<span class="sd">    </span>
+<span class="sd">     </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    
+    <span class="n">index</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">scores</span><span class="o">=</span><span class="p">[]</span>
+
+    
+    <span class="k">if</span> <span class="n">score_mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;raw&#39;</span><span class="p">,</span> <span class="s1">&#39;scaled&#39;</span><span class="p">,</span> <span class="s1">&#39;log&#39;</span><span class="p">,</span> <span class="s1">&#39;log2&#39;</span><span class="p">,</span> <span class="s1">&#39;log10&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;score_mode must be one of these values: [&#39;raw&#39;, &#39;scaled&#39;, &#39;log&#39;, &#39;log2&#39;, &#39;log10&#39;] &quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">signatures_dict</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">dict</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;signatures_dict must be a dict&quot;</span><span class="p">)</span>
+        
+    
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">signatures_dict</span><span class="p">)</span><span class="o">!=</span><span class="nb">dict</span><span class="p">:</span>
+        <span class="n">signatures_dict</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">signatures_dict</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        
+   <span class="c1"># return data</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">return_array</span><span class="p">)</span><span class="o">!=</span><span class="nb">bool</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;return_array must be a boolean&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">return_array</span><span class="o">==</span><span class="kc">False</span><span class="p">:</span>   
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Checking for genes not in AnnData.raw.var_names ...&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="n">c</span><span class="o">=</span><span class="mi">0</span> <span class="c1">#counter</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">signatures_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">index</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">geneset</span><span class="o">=</span><span class="n">signatures_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">geneset</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">geneset</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">var_names</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">geneset</span><span class="p">)</span><span class="o">!=</span><span class="nb">len</span><span class="p">(</span><span class="n">signatures_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
+            <span class="n">c</span><span class="o">+=</span><span class="mi">1</span>
+            <span class="nb">print</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">signatures_dict</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">geneset</span><span class="p">))</span> <span class="o">+</span><span class="s1">&#39;/&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">signatures_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span><span class="o">+</span><span class="s1">&#39; of &quot;&#39;</span><span class="o">+</span> <span class="n">i</span> <span class="o">+</span><span class="s1">&#39;&quot; signature genes were removed since they are not in AnnData.raw.var_names&#39;</span><span class="p">)</span>
+        <span class="n">count</span><span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="p">[:,</span> <span class="n">geneset</span><span class="p">]</span><span class="o">.</span><span class="n">X</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="c1"># matrix of count (true when the expression of</span>
+                                                               <span class="c1"># a gene in the geneset is higher than 0)</span>
+        <span class="n">exp</span><span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="p">[:,</span> <span class="n">geneset</span><span class="p">]</span><span class="o">.</span><span class="n">X</span> <span class="c1"># matrix of raw expresion values of genes of the geneset</span>
+        <span class="n">count</span><span class="o">=</span><span class="n">count</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">geneset</span><span class="p">)</span> <span class="c1"># vector of count: row-wise (per cell) sum divided by the total number of genes in geneset</span>
+        <span class="n">exp</span><span class="o">=</span> <span class="n">exp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="p">[:,</span> <span class="p">:]</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># vector of expression: rowe-wise (per cell) sum divided by the total expression of all the genes.</span>
+        <span class="n">score</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">count</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">exp</span><span class="p">)</span> <span class="c1"># to compute signature score</span>
+        <span class="n">score</span><span class="o">=</span> <span class="n">score</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">score</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+ 
+    <span class="k">if</span> <span class="n">return_array</span><span class="o">==</span><span class="kc">False</span><span class="p">:</span>   
+        <span class="k">if</span> <span class="n">c</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;All signature genes are in AnnData.raw.var_names&#39;</span><span class="p">)</span>
+    
+    <span class="n">scores</span><span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">scores</span><span class="p">),</span> <span class="n">columns</span><span class="o">=</span><span class="n">index</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">score_mode</span><span class="o">==</span><span class="s1">&#39;scaled&#39;</span><span class="p">:</span>
+        <span class="n">scores</span><span class="o">=</span> <span class="n">scores</span><span class="o">/</span> <span class="n">scores</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+        
+    <span class="k">elif</span> <span class="n">score_mode</span><span class="o">==</span><span class="s1">&#39;log2&#39;</span><span class="p">:</span>
+        <span class="n">min_val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nextafter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">scores</span> <span class="o">+</span> <span class="n">min_val</span><span class="p">)</span>
+        
+    <span class="k">elif</span> <span class="n">score_mode</span><span class="o">==</span><span class="s1">&#39;log10&#39;</span><span class="p">:</span>
+        <span class="n">min_val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nextafter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">scores</span> <span class="o">+</span> <span class="n">min_val</span><span class="p">)</span>
+    
+    <span class="k">elif</span> <span class="n">score_mode</span><span class="o">==</span><span class="s1">&#39;log&#39;</span><span class="p">:</span>
+        <span class="n">min_val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nextafter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">scores</span> <span class="o">+</span> <span class="n">min_val</span><span class="p">)</span>
+        
+    
+    <span class="k">if</span> <span class="n">return_array</span><span class="o">==</span><span class="kc">True</span><span class="p">:</span> 
+        <span class="n">scores</span><span class="o">=</span><span class="n">scores</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">scores</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computing &#39;</span><span class="o">+</span> <span class="n">score_mode</span> <span class="o">+</span> <span class="s1">&#39; signature scores ...&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">scores</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">scores</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;&quot;&#39;</span> <span class="o">+</span> <span class="s1">&#39; added in Anndata.obs&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="signature_based_classification"><a class="viewcode-back" href="../../modules_modified.html#cia.investigate.signature_based_classification">[docs]</a><span class="k">def</span> <span class="nf">signature_based_classification</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">signatures_dict</span><span class="o">=</span><span class="nb">dict</span><span class="p">(),</span> <span class="n">negative_markers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fast_mode</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">partial_classification</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_iter</span><span class="o">=</span><span class="mi">500</span> <span class="p">,</span><span class="n">p</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">q</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">FC_threshold</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">new_score</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">obs_name</span><span class="o">=</span><span class="s1">&#39;Class&#39;</span><span class="p">,</span> <span class="n">n_proc</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">n_bins</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">unassigned_label</span><span class="o">=</span><span class="s1">&#39;Unassigned&#39;</span><span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">    Given a dictionary of gene signatures, this function exploits signature_score() to compute scaled score (with fast_mode=True) or Fold Change</span>
+<span class="sd">    (FC) scores of each signature (signature score/randomic signature score) and it classifies each cell accordingly with the highest score</span>
+<span class="sd">    value. </span>
+<span class="sd"> </span>
+<span class="sd">          </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    </span>
+<span class="sd">    data: anndata.AnnData</span>
+<span class="sd">        an AnnData object.</span>
+<span class="sd">    </span>
+<span class="sd">    signatures_dict: dict</span>
+<span class="sd">        a dictionary having as keys the signature names and as values the gene signatures (lists of gene names).</span>
+<span class="sd">        </span>
+<span class="sd">    negative_markers: dict or None</span>
+<span class="sd">        a dictionary having as keys the signature names and as values the lists of negative marker genes (lists of gene names).</span>
+
+<span class="sd">    fast_mode: bool</span>
+<span class="sd">        if True the comparison with randomic genes is skipped.</span>
+<span class="sd">        </span>
+<span class="sd">    partial_classification: bool</span>
+<span class="sd">        Only when fast_mode is True it allows to specify if the signatures are expected to classify the whole dataset (False) or not (True).</span>
+
+<span class="sd">    n_iter: int</span>
+<span class="sd">        an integer to set the number of iterations performed to generate the random gene lists.</span>
+<span class="sd">        </span>
+<span class="sd">    p: int or float or None</span>
+<span class="sd">        if not None, p is a number that specifies the p-value above which the signature is not considered significant in the cell.</span>
+<span class="sd">        </span>
+<span class="sd">    q: int or float or None</span>
+<span class="sd">        if not None, q is a number (from 0 to 1) that specifies the quantile of a signature FC score values distribution, below which the signature is not considered expressed in the cell.</span>
+<span class="sd">        </span>
+<span class="sd">    FC_threshold: int or float</span>
+<span class="sd">        a number that specifies the minimum FC score value to be considered.</span>
+<span class="sd">        NB: the default value is 1, meaning that when the FC score is lower than 1 (the signature score is lower than the randomic one), the FC score value is set to 0. </span>
+<span class="sd">    </span>
+<span class="sd">    new_score: str or None</span>
+<span class="sd">        if not None, new_score specifies if raw scores in obs have to be substituted with FC score (&quot;FC&quot;) or p-values (&quot;pval&quot;).</span>
+<span class="sd">    </span>
+<span class="sd">    obs_name: str </span>
+<span class="sd">        a string that specifies the AnnData obs name of the returned classification.</span>
+<span class="sd">        </span>
+<span class="sd">    n_proc: int</span>
+<span class="sd">        an integer that specifies the number of processors to be used.</span>
+<span class="sd">        </span>
+<span class="sd">    n_bins: int</span>
+<span class="sd">        an integer that specifies the number of expression level bins in which dataset genes are divided.</span>
+<span class="sd">       </span>
+<span class="sd">    unassigned_label: str</span>
+<span class="sd">       a string that specifies the label of unissigned cells.</span>
+<span class="sd">       </span>
+<span class="sd">    </span>
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    </span>
+<span class="sd">    TypeError</span>
+<span class="sd">        If n_iter is not an integer.</span>
+<span class="sd">        If p is not an integer or a float.</span>
+<span class="sd">        If q is not an integer or a float.</span>
+<span class="sd">        If FC_threshold is not an integer or a float.</span>
+<span class="sd">        If n_bins is not an integer.</span>
+<span class="sd">        </span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If q is not between 0 and 1.</span>
+<span class="sd">    </span>
+<span class="sd">    KeyError</span>
+<span class="sd">        If a negative_markers key doesn&#39;t match signatures_dict keys. </span>
+<span class="sd">    </span>
+<span class="sd">     </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">signatures</span><span class="o">=</span> <span class="n">signatures_dict</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">start</span><span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    
+
+
+    <span class="k">if</span> <span class="n">negative_markers</span><span class="o">!=</span><span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">negative_markers</span><span class="p">)</span> <span class="o">!=</span><span class="nb">dict</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;negative_markers must be a dict&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">negative_markers</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span><span class="nb">list</span><span class="p">(</span><span class="n">signatures</span><span class="o">.</span><span class="n">keys</span><span class="p">())))</span><span class="o">!=</span><span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">negative_markers</span><span class="o">.</span><span class="n">keys</span><span class="p">())):</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;negative_markers.keys() must be also signatures_dict.keys()&quot;</span><span class="p">)</span>
+
+
+
+            
+    <span class="k">if</span> <span class="n">fast_mode</span><span class="o">==</span><span class="kc">True</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">partial_classification</span><span class="o">==</span><span class="kc">True</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">signatures</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">ctrl</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">var_names</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">signatures</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">ctrl</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">ctrl</span><span class="p">)</span><span class="o">-</span><span class="nb">set</span><span class="p">(</span><span class="n">signatures</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+            <span class="n">signatures</span><span class="p">[</span><span class="n">unassigned_label</span><span class="p">]</span><span class="o">=</span> <span class="n">ctrl</span>
+        
+        <span class="n">arr</span><span class="o">=</span><span class="n">signature_score</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">signatures_dict</span><span class="o">=</span><span class="n">signatures</span><span class="p">,</span> <span class="n">score_mode</span><span class="o">=</span><span class="s1">&#39;scaled&#39;</span><span class="p">,</span>  <span class="n">return_array</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">signatures</span><span class="o">.</span><span class="n">keys</span><span class="p">())]</span><span class="o">=</span><span class="n">arr</span>
+        
+        
+        <span class="k">if</span> <span class="n">negative_markers</span><span class="o">!=</span><span class="kc">None</span><span class="p">:</span>
+            <span class="n">nm</span><span class="o">=</span><span class="p">{}</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">negative_markers</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">nm</span><span class="p">[</span><span class="n">n</span><span class="o">+</span><span class="s1">&#39;_negative&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">negative_markers</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+            <span class="n">signature_score</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">signatures_dict</span><span class="o">=</span><span class="n">nm</span><span class="p">,</span> <span class="n">score_mode</span><span class="o">=</span><span class="s1">&#39;scaled&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">negative_markers</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">kl</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">signatures</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+                <span class="n">arr</span><span class="p">[:,</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">kl</span><span class="o">==</span><span class="n">n</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span><span class="o">=</span><span class="n">arr</span><span class="p">[:,</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">kl</span><span class="o">==</span><span class="n">n</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">n</span><span class="o">+</span><span class="s1">&#39;_negative&#39;</span><span class="p">])</span>      
+        <span class="n">pred</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">pred_str</span><span class="o">=</span><span class="n">pred</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;O&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">pred_str</span><span class="p">[</span><span class="n">pred</span><span class="o">==</span><span class="n">n</span><span class="p">]</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">signatures</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span>
+
+        <span class="n">pred_str</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">]</span><span class="o">=</span> <span class="n">unassigned_label</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Classification labels added in AnnData.obs[&quot;&#39;</span> <span class="o">+</span> <span class="n">obs_name</span><span class="o">+</span><span class="s1">&#39;&quot;]&#39;</span><span class="p">)</span>
+
+        <span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">obs_name</span><span class="p">]</span><span class="o">=</span><span class="n">pred_str</span>
+        <span class="n">end</span><span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Runtime of the process is </span><span class="si">{</span><span class="nb">round</span><span class="p">((</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">),</span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2"> s &quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;Fast classification complete!&quot;</span>
+
+   
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">n_iter</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;n_iter must be an integer&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">p</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>   <span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;p must be an integer or a float&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">q</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>        
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>   <span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;q must be an integer or a float&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">q</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">q</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;q must be between 0 and 1&quot;</span><span class="p">)</span>
+        
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">FC_threshold</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>   <span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;FC_threshold must be an integer or a float&quot;</span><span class="p">)</span>
+        
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">n_bins</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;n_bins must be an integer&quot;</span><span class="p">)</span>
+        
+
+    <span class="k">def</span> <span class="nf">parallel_apply_along_axis</span><span class="p">(</span><span class="n">func1d</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">arr</span><span class="p">,</span> <span class="n">n_proc</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="n">effective_axis</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">axis</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">axis</span>
+        <span class="k">if</span> <span class="n">effective_axis</span> <span class="o">!=</span> <span class="n">axis</span><span class="p">:</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">arr</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">effective_axis</span><span class="p">)</span>
+        <span class="n">chunks</span> <span class="o">=</span> <span class="p">[</span><span class="n">sub_arr</span> <span class="k">for</span> <span class="n">sub_arr</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">array_split</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">n_proc</span><span class="p">)]</span>
+        <span class="n">pool</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pool</span><span class="p">()</span>
+        <span class="n">prod_x</span><span class="o">=</span><span class="n">partial</span><span class="p">(</span><span class="n">signature_score</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">],</span> <span class="n">return_array</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;return_array&#39;</span><span class="p">])</span>
+        <span class="n">individual_results</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">prod_x</span><span class="p">,</span> <span class="n">chunks</span><span class="p">)</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span> 
+        <span class="n">pool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span> 
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">individual_results</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    
+    <span class="n">signature_score</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">signatures_dict</span><span class="o">=</span><span class="n">signatures</span><span class="p">)</span>
+ 
+    <span class="n">min_val</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nextafter</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">index</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">pval_matrix</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">FC_scores</span><span class="o">=</span><span class="p">[]</span>
+    
+    <span class="c1"># Generation of the mean of the gene dataset</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">X</span><span class="p">):</span>
+        <span class="n">matrix</span><span class="o">=</span><span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">X</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;convert dense to sparse matrix&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">matrix</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">X</span>
+            
+    <span class="c1">#data.var[&#39;bin&#39;]=np.mean(data.raw.X.todense(), axis=0).tolist()[0]</span>
+    <span class="c1">#data.var[&#39;bin&#39;]=np.mean(data.raw.X, axis=0).tolist()</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">var</span><span class="p">[</span><span class="s1">&#39;bin&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="n">obs_avg</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">var</span><span class="p">[</span><span class="s1">&#39;bin&#39;</span><span class="p">]</span>
+    <span class="c1"># Division to obtain the genes in the bin</span>
+    <span class="n">n_items</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">obs_avg</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_bins</span><span class="p">))</span>
+    <span class="n">obs_cut</span> <span class="o">=</span> <span class="n">obs_avg</span><span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;min&#39;</span><span class="p">)</span> <span class="o">//</span> <span class="n">n_items</span>
+    <span class="n">obs_cut_df</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">obs_cut</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">signatures</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        
+        <span class="c1">#geneset=signatures_dict[i]</span>
+        <span class="n">signatures</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">signatures</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">var_names</span><span class="p">))</span>
+    
+        
+        <span class="n">index</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">gene_pool</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">var_names</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">signatures</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+        <span class="n">random_scores</span><span class="o">=</span><span class="p">[]</span>
+        <span class="n">X_list</span><span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        <span class="n">X_list</span><span class="o">=</span><span class="n">X_list</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">X_list</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">random_gmt</span><span class="o">=</span><span class="p">{}</span>
+         
+
+        <span class="c1">### slicing obs_cut to it ot obatin genelist 2 bin and also to know quanti geni random </span>
+        <span class="c1">#devo prendere per ogni bin</span>
+        <span class="n">n_rand</span><span class="o">=</span><span class="n">obs_cut_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">signatures</span><span class="p">[</span><span class="n">i</span><span class="p">],:]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;bin&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+    
+        
+        <span class="c1">#return n_rand</span>
+        
+        <span class="n">gene2retain</span><span class="o">=</span><span class="n">obs_cut_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">gene_pool</span><span class="p">,:]</span>
+        <span class="c1">#dictionrary bin-genes</span>
+        <span class="n">obs_dict</span><span class="o">=</span><span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">gene2retain</span><span class="p">[</span><span class="s1">&#39;bin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">():</span>
+            <span class="n">obs_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">gene2retain</span><span class="p">[</span><span class="n">gene2retain</span><span class="p">[</span><span class="s1">&#39;bin&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">obs_cut_df</span><span class="p">[</span><span class="s1">&#39;bin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span><span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">gene2retain</span><span class="p">[</span><span class="s1">&#39;bin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())):</span>
+            <span class="n">obs_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">obs_cut_df</span><span class="p">[</span><span class="n">obs_cut_df</span><span class="p">[</span><span class="s1">&#39;bin&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+ 
+        
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">n_iter</span><span class="p">):</span>
+            
+            <span class="n">random_list</span><span class="o">=</span><span class="p">[]</span>
+            <span class="k">for</span> <span class="n">bins</span> <span class="ow">in</span> <span class="n">n_rand</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">obs_dict</span><span class="p">[</span><span class="n">bins</span><span class="p">])</span>
+                <span class="n">random_list</span><span class="o">=</span><span class="n">random_list</span><span class="o">+</span> <span class="n">obs_dict</span><span class="p">[</span><span class="n">bins</span><span class="p">][:</span><span class="n">n_rand</span><span class="p">[</span><span class="n">bins</span><span class="p">]]</span>
+        
+            <span class="n">random_gmt</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">j</span><span class="p">)]</span><span class="o">=</span><span class="n">random_list</span>
+
+       
+
+        <span class="c1">#random_scores=signature_score(data=data, signatures_dict=random_gmt, return_array=True)</span>
+        <span class="n">random_scores</span> <span class="o">=</span> <span class="n">parallel_apply_along_axis</span><span class="p">(</span><span class="n">signature_score</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">arr</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">random_gmt</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(),</span> 
+                                                  <span class="n">n_proc</span><span class="o">=</span><span class="n">n_proc</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">return_array</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        
+        <span class="c1">#random_scores=random_scores.to_numpy()</span>
+        <span class="n">X_control</span> <span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">random_scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">X_control</span><span class="o">=</span><span class="n">X_control</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">X_control</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">X_list</span><span class="o">=</span> <span class="n">X_list</span> <span class="o">+</span> <span class="n">min_val</span>
+        <span class="n">X_control</span><span class="o">=</span> <span class="n">X_control</span> <span class="o">+</span> <span class="n">min_val</span>
+        <span class="n">p_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">X_list</span> <span class="o">&lt;</span> <span class="n">random_scores</span> <span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span><span class="n">n_iter</span>
+        <span class="n">pval_matrix</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p_val</span><span class="p">)</span>
+        <span class="n">score</span><span class="o">=</span><span class="n">X_list</span><span class="o">/</span><span class="n">X_control</span>
+        <span class="n">FC_scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+        
+    <span class="n">pval_matrix</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pval_matrix</span><span class="p">)</span>
+    <span class="n">FC_scores</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">FC_scores</span><span class="p">)</span>
+    
+    <span class="n">uns1</span><span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">FC_scores</span><span class="o">.</span><span class="n">squeeze</span><span class="p">())</span>
+    <span class="n">uns2</span><span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">pval_matrix</span><span class="o">.</span><span class="n">squeeze</span><span class="p">())</span>
+    
+    <span class="k">if</span> <span class="n">new_score</span><span class="o">!=</span><span class="kc">None</span><span class="p">:</span>
+        
+        <span class="k">if</span> <span class="n">new_score</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;FC&#39;</span><span class="p">,</span> <span class="s1">&#39;pval&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;new_score must be &quot;FC&quot; or &quot;pval&quot;&#39;</span><span class="p">)</span>
+            
+        <span class="k">elif</span> <span class="n">new_score</span><span class="o">==</span> <span class="s1">&#39;FC&#39;</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;raw scores are being replaced by Fold Change signature scores ...&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="p">)):</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">index</span><span class="p">[</span><span class="n">l</span><span class="p">]]</span><span class="o">=</span><span class="n">FC_scores</span><span class="p">[</span><span class="n">l</span><span class="p">]</span>
+
+
+        <span class="k">elif</span> <span class="n">new_score</span><span class="o">==</span> <span class="s1">&#39;pval&#39;</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;raw scores are being replaced by p-values ...&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="p">)):</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">index</span><span class="p">[</span><span class="n">l</span><span class="p">]]</span><span class="o">=</span><span class="n">pval_matrix</span><span class="p">[</span><span class="n">l</span><span class="p">]</span>
+
+
+    <span class="k">if</span> <span class="n">q</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+
+        <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="p">)):</span>
+            <span class="n">FC_scores</span><span class="p">[</span><span class="n">l</span><span class="p">][(</span><span class="n">FC_scores</span><span class="p">[</span><span class="n">l</span><span class="p">])</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">FC_scores</span><span class="p">[</span><span class="n">l</span><span class="p">],</span> <span class="n">q</span><span class="o">=</span><span class="n">q</span><span class="p">)]</span><span class="o">=</span><span class="mi">0</span>
+    
+    <span class="k">if</span> <span class="n">p</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">pval_matrix</span><span class="o">=</span><span class="n">pval_matrix</span><span class="o">&gt;=</span><span class="n">p</span>
+        <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="p">)):</span>
+            <span class="n">FC_scores</span><span class="p">[</span><span class="n">l</span><span class="p">][</span><span class="n">pval_matrix</span><span class="p">[</span><span class="n">l</span><span class="p">]]</span><span class="o">=</span><span class="mi">0</span>
+        
+
+    <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="p">)):</span>
+        <span class="n">FC_scores</span><span class="p">[</span><span class="n">l</span><span class="p">][(</span><span class="n">FC_scores</span><span class="p">[</span><span class="n">l</span><span class="p">])</span> <span class="o">&lt;=</span> <span class="n">FC_threshold</span><span class="p">]</span><span class="o">=</span><span class="mi">0</span>
+
+
+    <span class="k">if</span> <span class="n">negative_markers</span><span class="o">!=</span><span class="kc">None</span><span class="p">:</span>
+        <span class="n">nm</span><span class="o">=</span><span class="p">{}</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">negative_markers</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">nm</span><span class="p">[</span><span class="n">n</span><span class="o">+</span><span class="s1">&#39;_negative&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">negative_markers</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+        <span class="n">signature_score</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">signatures_dict</span><span class="o">=</span><span class="n">nm</span><span class="p">,</span> <span class="n">score_mode</span><span class="o">=</span><span class="s1">&#39;scaled&#39;</span><span class="p">)</span>
+        <span class="n">kl</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">signatures</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">negative_markers</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">FC_scores</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">kl</span><span class="o">==</span><span class="n">n</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">FC_scores</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">kl</span><span class="o">==</span><span class="n">n</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">n</span><span class="o">+</span><span class="s1">&#39;_negative&#39;</span><span class="p">]))</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">),</span><span class="mi">1</span><span class="p">)</span>        
+
+    <span class="n">uns3</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">FC_scores</span><span class="o">.</span><span class="n">squeeze</span><span class="p">())</span>
+    
+    <span class="n">pred</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">FC_scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">pred_str</span><span class="o">=</span><span class="n">pred</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">pred_str</span><span class="o">=</span><span class="n">pred_str</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;O&#39;</span><span class="p">)</span>
+    
+    
+        
+    
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">index</span><span class="p">)):</span>
+         <span class="n">pred_str</span><span class="p">[</span><span class="n">pred</span><span class="o">==</span><span class="n">n</span><span class="p">]</span><span class="o">=</span><span class="n">index</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+    
+    <span class="n">pred_str</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">FC_scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">]</span><span class="o">=</span> <span class="n">unassigned_label</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Classification labels added in AnnData.obs[&quot;&#39;</span> <span class="o">+</span> <span class="n">obs_name</span><span class="o">+</span><span class="s1">&#39;&quot;]&#39;</span><span class="p">)</span>
+    
+    <span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">obs_name</span><span class="p">]</span><span class="o">=</span><span class="n">pred_str</span>
+    <span class="n">uns1</span><span class="o">.</span><span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="s1">&#39;_FC&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">signatures</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+    <span class="n">uns3</span><span class="o">.</span><span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="s1">&#39;_filtered_FC&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">signatures</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+    <span class="n">uns2</span><span class="o">.</span><span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="s1">&#39;_pval&#39;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">signatures</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Results have been stored in AnnData.uns[&quot;signature_based_classification&quot;]&#39;</span><span class="p">)</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s1">&#39;signature_based_classification&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">uns1</span><span class="p">,</span> <span class="n">uns3</span><span class="p">,</span> <span class="n">uns2</span><span class="p">])</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+    
+    <span class="c1"># end time</span>
+    <span class="n">end</span><span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Runtime of the process is </span><span class="si">{</span><span class="nb">round</span><span class="p">((</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span><span class="o">/</span><span class="mi">60</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="si">}</span><span class="s2"> min with </span><span class="si">{</span><span class="n">n_proc</span><span class="si">}</span><span class="s2"> cores&quot;</span><span class="p">)</span></div>
+    
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, National Institue of Molecular Genetics (INGM).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

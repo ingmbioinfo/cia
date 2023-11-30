@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cia.report &mdash; CIA 0.0.post1.dev32+g0664b3a.d20220528 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> CIA
+          </a>
+              <div class="version">
+                0.0.post1.dev32+g0664b3a.d20220528
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules_modified.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial/Clustering_Independent_Annotation.html">Tutorial: CIA workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">CIA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>cia.report</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for cia.report</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<span class="kn">import</span> <span class="nn">itertools</span> 
+<span class="kn">import</span> <span class="nn">scipy</span>
+
+<div class="viewcode-block" id="group_composition"><a class="viewcode-back" href="../../modules_modified.html#cia.report.group_composition">[docs]</a><span class="k">def</span> <span class="nf">group_composition</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">classification_obs</span><span class="p">,</span> <span class="n">groups_obs</span><span class="p">,</span> <span class="n">columns_order</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Reds&#39;</span><span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">    Plots a heatmap showing the percentages of cells classified with a given method (method of interest) in cell groups defined with a different one (reference method).</span>
+<span class="sd">           </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">     </span>
+<span class="sd">    data: anndata.AnnData</span>
+<span class="sd">        an AnnData object.</span>
+<span class="sd">        </span>
+<span class="sd">    classification_obs: str</span>
+<span class="sd">        a string specifying the AnnData.obs where the labels assigned by the method of interest are stored.</span>
+<span class="sd">    groups_obs: str</span>
+<span class="sd">        a string specifying the AnnData.obs where the labels assigned by the reference method are stored.  </span>
+<span class="sd">    columns_order: list(str)</span>
+<span class="sd">        a list of strings with column names    </span>
+<span class="sd">    cmap: str or matplotlib.colors.Colormap</span>
+<span class="sd">        the mapping from data values to color space. </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">df</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">crosstab</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groups_obs</span><span class="p">],</span> <span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">classification_obs</span><span class="p">])</span>
+    <span class="n">df</span><span class="o">=</span><span class="nb">round</span><span class="p">((</span><span class="n">df</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">),</span><span class="mi">1</span><span class="p">))</span><span class="o">*</span><span class="mi">100</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">columns_order</span><span class="o">!=</span><span class="kc">None</span><span class="p">:</span>
+        <span class="n">df</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="n">columns_order</span><span class="p">]</span>
+    <span class="n">sns</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">annot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">)</span></div>
+    
+
+<div class="viewcode-block" id="classification_metrics"><a class="viewcode-back" href="../../modules_modified.html#cia.report.classification_metrics">[docs]</a><span class="k">def</span> <span class="nf">classification_metrics</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">classification_obs</span><span class="p">,</span> <span class="n">groups_obs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">    Computes the main metrics of classification by comparing labels of cells classified with given methods (methods of interest) and labels assigned with a different one (reference method).</span>
+<span class="sd">    NB: labels must be correspondent!</span>
+<span class="sd">           </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">     </span>
+<span class="sd">    data: anndata.AnnData</span>
+<span class="sd">        an AnnData object.</span>
+<span class="sd">        </span>
+<span class="sd">    classification_obs: list(str)</span>
+<span class="sd">        a list of string specifying the AnnData.obs columns where the labels assigned by the methods of interest are stored.</span>
+<span class="sd">    groups_obs: str</span>
+<span class="sd">        a string specifying the AnnData.obs where the labels assigned by the reference method.      </span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    </span>
+<span class="sd">    report: pandas.DataFrame</span>
+<span class="sd">        a pandas.DataFame containing the overall sensitivity (SE), specificity (SP), precision (PR), accuracy (ACC) and F1-score (F1) of the selected classification methods.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+        
+    <span class="n">report</span><span class="o">=</span><span class="p">{}</span>
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">classification_obs</span><span class="p">:</span>
+        <span class="n">SE</span><span class="o">=</span><span class="p">[]</span>
+        <span class="n">SP</span><span class="o">=</span><span class="p">[]</span>
+        <span class="n">PR</span><span class="o">=</span><span class="p">[]</span>
+        <span class="n">ACC</span><span class="o">=</span><span class="p">[]</span>
+        <span class="n">F1</span><span class="o">=</span><span class="p">[]</span>
+
+
+
+        <span class="n">TP_l</span><span class="o">=</span><span class="p">[]</span>
+        <span class="n">TN_l</span><span class="o">=</span><span class="p">[]</span>
+        <span class="n">FP_l</span><span class="o">=</span><span class="p">[]</span>
+        <span class="n">FN_l</span><span class="o">=</span><span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groups_obs</span><span class="p">]</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">categories</span><span class="p">:</span>
+            <span class="n">TP_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">sum</span><span class="p">((</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">==</span><span class="n">i</span><span class="p">)</span><span class="o">&amp;</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groups_obs</span><span class="p">]</span><span class="o">==</span><span class="n">i</span><span class="p">)))</span>
+            <span class="n">TN_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">sum</span><span class="p">((</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">!=</span><span class="n">i</span><span class="p">)</span><span class="o">&amp;</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groups_obs</span><span class="p">]</span><span class="o">!=</span><span class="n">i</span><span class="p">)))</span>
+            <span class="n">FP_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">sum</span><span class="p">((</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">==</span><span class="n">i</span><span class="p">)</span><span class="o">&amp;</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groups_obs</span><span class="p">]</span><span class="o">!=</span><span class="n">i</span><span class="p">)))</span>
+            <span class="n">FN_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">sum</span><span class="p">((</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">!=</span><span class="n">i</span><span class="p">)</span><span class="o">&amp;</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groups_obs</span><span class="p">]</span><span class="o">==</span><span class="n">i</span><span class="p">)))</span>
+
+        <span class="n">TP</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">TP_l</span><span class="p">)</span>
+        <span class="n">TN</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">TN_l</span><span class="p">)</span>
+        <span class="n">FP</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">FP_l</span><span class="p">)</span>
+        <span class="n">FN</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">FN_l</span><span class="p">)</span>
+
+        <span class="n">SE</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TP</span><span class="o">/</span><span class="p">(</span><span class="n">TP</span><span class="o">+</span><span class="n">FN</span><span class="p">))</span>
+        <span class="n">SP</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TN</span><span class="o">/</span><span class="p">(</span><span class="n">TN</span><span class="o">+</span><span class="n">FP</span><span class="p">))</span>
+        <span class="n">PR</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">TP</span><span class="o">/</span><span class="p">(</span><span class="n">TP</span><span class="o">+</span><span class="n">FP</span><span class="p">))</span>
+        <span class="n">ACC</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">TN</span><span class="o">+</span><span class="n">TP</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">TN</span><span class="o">+</span><span class="n">TP</span><span class="o">+</span><span class="n">FN</span><span class="o">+</span><span class="n">FP</span><span class="p">))</span>
+        <span class="n">F1</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">TP</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">TP</span><span class="o">+</span><span class="n">FN</span><span class="o">+</span><span class="n">FP</span><span class="p">))</span>
+        <span class="n">report</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">SE</span><span class="p">,</span><span class="n">SP</span><span class="p">,</span><span class="n">PR</span><span class="p">,</span><span class="n">ACC</span><span class="p">,</span><span class="n">F1</span><span class="p">])</span><span class="o">.</span><span class="n">flat</span>
+
+    <span class="n">report</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;SE&#39;</span><span class="p">,</span> <span class="s1">&#39;SP&#39;</span><span class="p">,</span> <span class="s1">&#39;PR&#39;</span><span class="p">,</span> <span class="s1">&#39;ACC&#39;</span><span class="p">,</span> <span class="s1">&#39;F1&#39;</span> <span class="p">]</span>
+    <span class="n">report</span><span class="o">=</span><span class="n">report</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">report</span></div>
+
+<div class="viewcode-block" id="grouped_classification_metrics"><a class="viewcode-back" href="../../modules_modified.html#cia.report.grouped_classification_metrics">[docs]</a><span class="k">def</span> <span class="nf">grouped_classification_metrics</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">classification_obs</span><span class="p">,</span> <span class="n">groups_obs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">    Computes the main metrics of classification by comparing labels of cells classified with a given method (method of interest) and labels assigned with a different one (reference method) for each group defined by the latter.</span>
+<span class="sd">    NB: labels must be correspondent!</span>
+<span class="sd">           </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">     </span>
+<span class="sd">    data: anndata.AnnData</span>
+<span class="sd">        an AnnData object.</span>
+<span class="sd">        </span>
+<span class="sd">    classification_obs: str</span>
+<span class="sd">        a string specifying the AnnData.obs columns where the labels assigned by the method of interest are stored.</span>
+<span class="sd">    groups_obs: str</span>
+<span class="sd">        a string specifying the AnnData.obs where the labels assigned by the reference method.      </span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    </span>
+<span class="sd">    report: pandas.DataFrame</span>
+<span class="sd">        a pandas.DataFame containing the per-group sensitivity (SE), specificity (SP), precision (PR), accuracy (ACC) and F1-score (F1) of the selected classification method.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+ 
+    <span class="n">report</span><span class="o">=</span><span class="p">{}</span>
+    <span class="n">SE</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">SP</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">PR</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">ACC</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">F1</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">TP_l</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">TN_l</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">FP_l</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">FN_l</span><span class="o">=</span><span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groups_obs</span><span class="p">]</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">categories</span><span class="p">:</span>
+        <span class="n">TP_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">sum</span><span class="p">((</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">classification_obs</span><span class="p">]</span><span class="o">==</span><span class="n">i</span><span class="p">)</span><span class="o">&amp;</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groups_obs</span><span class="p">]</span><span class="o">==</span><span class="n">i</span><span class="p">)))</span>
+        <span class="n">TN_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">sum</span><span class="p">((</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">classification_obs</span><span class="p">]</span><span class="o">!=</span><span class="n">i</span><span class="p">)</span><span class="o">&amp;</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groups_obs</span><span class="p">]</span><span class="o">!=</span><span class="n">i</span><span class="p">)))</span>
+        <span class="n">FP_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">sum</span><span class="p">((</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">classification_obs</span><span class="p">]</span><span class="o">==</span><span class="n">i</span><span class="p">)</span><span class="o">&amp;</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groups_obs</span><span class="p">]</span><span class="o">!=</span><span class="n">i</span><span class="p">)))</span>
+        <span class="n">FN_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">sum</span><span class="p">((</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">classification_obs</span><span class="p">]</span><span class="o">!=</span><span class="n">i</span><span class="p">)</span><span class="o">&amp;</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groups_obs</span><span class="p">]</span><span class="o">==</span><span class="n">i</span><span class="p">)))</span>
+    
+    <span class="n">TP_l</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">TP_l</span><span class="p">)</span>
+    <span class="n">TN_l</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">TN_l</span><span class="p">)</span>
+    <span class="n">FP_l</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">FP_l</span><span class="p">)</span>
+    <span class="n">FN_l</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">FN_l</span><span class="p">)</span>
+        
+    <span class="n">SE</span><span class="o">=</span><span class="n">TP_l</span><span class="o">/</span><span class="p">(</span><span class="n">TP_l</span><span class="o">+</span><span class="n">FN_l</span><span class="p">)</span>
+    <span class="n">SP</span><span class="o">=</span><span class="n">TN_l</span><span class="o">/</span><span class="p">(</span><span class="n">TN_l</span><span class="o">+</span><span class="n">FP_l</span><span class="p">)</span>
+    <span class="n">PR</span><span class="o">=</span><span class="n">TP_l</span><span class="o">/</span><span class="p">(</span><span class="n">TP_l</span><span class="o">+</span><span class="n">FP_l</span><span class="p">)</span>
+    <span class="n">ACC</span><span class="o">=</span><span class="p">(</span><span class="n">TN_l</span><span class="o">+</span><span class="n">TP_l</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">TN_l</span><span class="o">+</span><span class="n">TP_l</span><span class="o">+</span><span class="n">FN_l</span><span class="o">+</span><span class="n">FP_l</span><span class="p">)</span>
+    <span class="n">F1</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">TP_l</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">TP_l</span><span class="o">+</span><span class="n">FN_l</span><span class="o">+</span><span class="n">FP_l</span><span class="p">)</span>
+    <span class="n">report</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">SE</span><span class="p">,</span><span class="n">SP</span><span class="p">,</span><span class="n">PR</span><span class="p">,</span><span class="n">ACC</span><span class="p">,</span><span class="n">F1</span><span class="p">])</span>
+    <span class="n">report</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;SE&#39;</span><span class="p">,</span> <span class="s1">&#39;SP&#39;</span><span class="p">,</span> <span class="s1">&#39;PR&#39;</span><span class="p">,</span> <span class="s1">&#39;ACC&#39;</span><span class="p">,</span> <span class="s1">&#39;F1&#39;</span> <span class="p">]</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">columns</span><span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groups_obs</span><span class="p">]</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">categories</span>
+    <span class="n">report</span><span class="o">=</span><span class="n">report</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">report</span></div>
+
+<div class="viewcode-block" id="grouped_distributions"><a class="viewcode-back" href="../../modules_modified.html#cia.report.grouped_distributions">[docs]</a><span class="k">def</span> <span class="nf">grouped_distributions</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">columns_obs</span><span class="p">,</span> <span class="n">groups_obs</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Reds&#39;</span><span class="p">,</span> <span class="n">scale_medians</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">    By selecting AnnData.obs columns, this function plots a heatmap showing the medians of their values in cell groups and it prints a statistical report. For each cell group, a two-sided Wilcoxon test is perfomed to evaluate if the distribution with the highest median is different from the others. For each selected AnnData.obs columns set of values, grouped by cell groups, a two-sided Mann-Whitney U test is performed to evaluate if the distribution in the cell group having the highest median is different from the other groups distributions.</span>
+<span class="sd">           </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">     </span>
+<span class="sd">    data: anndata.AnnData</span>
+<span class="sd">        an AnnData object.</span>
+<span class="sd">    columns_obs: list(str)</span>
+<span class="sd">        a string specifying the AnnData.obs columns where the values of interest are stored.</span>
+<span class="sd">    groups_obs: str</span>
+<span class="sd">        a string specifying the AnnData.obs where the cell labels are stored.    </span>
+<span class="sd">    cmap: str or matplotlib.colors.Colormap</span>
+<span class="sd">        the mapping from data values to color space. </span>
+<span class="sd">    scale_medians: str or None</span>
+<span class="sd">        a parameter to set the scaling type of median values (None, &#39;row-wise&#39;, &#39;column-wise&#39;) </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">grouped_df</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">groups_obs</span><span class="p">)</span><span class="o">.</span><span class="n">median</span><span class="p">()</span>
+    <span class="n">grouped_df</span><span class="o">=</span><span class="n">grouped_df</span><span class="p">[</span><span class="n">columns_obs</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">scale_medians</span><span class="o">!=</span><span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">scale_medians</span><span class="o">==</span><span class="s1">&#39;row-wise&#39;</span><span class="p">:</span>
+            <span class="n">grouped_df</span><span class="o">=</span><span class="n">grouped_df</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">grouped_df</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">grouped_df</span><span class="o">=</span><span class="n">grouped_df</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">scale_medians</span><span class="o">==</span><span class="s1">&#39;column-wise&#39;</span><span class="p">:</span>
+            <span class="n">grouped_df</span><span class="o">=</span><span class="n">grouped_df</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">grouped_df</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+    <span class="n">sns</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">grouped_df</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">annot</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">subsets</span><span class="o">=</span><span class="p">{}</span>
+    <span class="n">results</span><span class="o">=</span><span class="p">{}</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Performing Wilcoxon test on each cell group ...&#39;</span><span class="p">)</span>
+    <span class="n">combs</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">permutations</span><span class="p">(</span><span class="n">columns_obs</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">count</span><span class="o">=</span><span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groups_obs</span><span class="p">]</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">categories</span><span class="p">:</span>
+        <span class="n">subsets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groups_obs</span><span class="p">]</span><span class="o">==</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">columns_obs</span><span class="p">]</span>
+        <span class="n">pos</span><span class="o">=</span><span class="n">subsets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">median</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span>
+        
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">combs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">((</span><span class="nb">sum</span><span class="p">(</span><span class="n">subsets</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span><span class="o">!=</span><span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">subsets</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span><span class="o">!=</span><span class="mi">0</span><span class="p">)):</span>
+                <span class="n">result</span><span class="o">=</span><span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">wilcoxon</span><span class="p">(</span><span class="n">subsets</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">subsets</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="n">alternative</span><span class="o">=</span><span class="s1">&#39;two-sided&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mf">0.01</span> <span class="ow">and</span> <span class="n">j</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="n">subsets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">median</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">pos</span><span class="p">]:</span>
+                            <span class="n">count</span><span class="o">+=</span><span class="mi">1</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;WARNING in cell group &#39;</span><span class="o">+</span><span class="n">i</span><span class="o">+</span><span class="s1">&#39;: &#39;</span><span class="o">+</span> <span class="n">j</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39; values are not significantly different from &#39;</span><span class="o">+</span><span class="n">j</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39; values.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">count</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;For each cell group there is a distribution significantly higher than the others (p&lt;0.01)&#39;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Performing Mann-Whitney U test on each selected AnnData.obs column ...&#39;</span><span class="p">)</span>
+    <span class="n">combs</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">permutations</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groups_obs</span><span class="p">]</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">categories</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">count</span><span class="o">=</span><span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">columns_obs</span><span class="p">:</span>
+        <span class="n">sign</span><span class="o">=</span><span class="p">{}</span>
+        <span class="n">l</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groups_obs</span><span class="p">]</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">categories</span><span class="p">:</span>
+            <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subsets</span><span class="p">[</span><span class="n">c</span><span class="p">][</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">sign</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">l</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>
+        <span class="n">sign</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groups_obs</span><span class="p">]</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">categories</span>
+        <span class="n">pos</span><span class="o">=</span><span class="n">sign</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">median</span><span class="p">()</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">combs</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">=</span><span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">mannwhitneyu</span><span class="p">(</span><span class="n">subsets</span><span class="p">[</span><span class="n">j</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="n">i</span><span class="p">],</span> <span class="n">subsets</span><span class="p">[</span><span class="n">j</span><span class="p">[</span><span class="mi">1</span><span class="p">]][</span><span class="n">i</span><span class="p">],</span> <span class="n">alternative</span><span class="o">=</span><span class="s1">&#39;two-sided&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mf">0.01</span> <span class="ow">and</span> <span class="n">j</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="n">sign</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">median</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">pos</span><span class="p">]:</span>
+                <span class="n">count</span><span class="o">+=</span><span class="mi">1</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;WARNING in &#39;</span><span class="o">+</span><span class="n">i</span><span class="o">+</span><span class="s1">&#39; distribution: values in &#39;</span><span class="o">+</span> <span class="n">j</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39; group are not significantly different from values in &#39;</span><span class="o">+</span><span class="n">j</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39; group&#39;</span><span class="p">)</span>  
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;(p= &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">+</span><span class="s1">&#39;)&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">count</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;For each distribution, there is only a cell group in which values are higher with respect to all the other groups  (p&lt;0.01)&#39;</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, National Institue of Molecular Genetics (INGM).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

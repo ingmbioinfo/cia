@@ -5,151 +5,176 @@ import itertools
 import scipy
 import os
 
+
 def group_composition(data, classification_obs, groups_obs, columns_order=None, cmap='Reds', save=None):
-    
-    """ 
+    """
     Plots a heatmap showing the percentages of cells classified with a given method (method of interest) in cell groups defined with a different one (reference method).
-           
+
     Parameters
     ----------
-     
-    data: anndata.AnnData
-        an AnnData object.
-        
-    classification_obs: str
-        a string specifying the AnnData.obs where the labels assigned by the method of interest are stored.
-    groups_obs: str
-        a string specifying the AnnData.obs where the labels assigned by the reference method are stored.  
-    columns_order: list(str)
-        a list of strings with column names    
-    cmap: str or matplotlib.colors.Colormap
-        the mapping from data values to color space. 
-    save: str
-        a string specifying the file name. In the working directory, if not present, 'figures' directory will be created and a file with the prefix 'CIA_' will be saved in it.
-    
+    data : anndata.AnnData
+        An AnnData object containing the cell classification data.
+    classification_obs : str
+        A string specifying the AnnData.obs column where the labels assigned by the method of interest are stored.
+    groups_obs : str
+        A string specifying the AnnData.obs column where the labels assigned by the reference method are stored.
+    columns_order : list of str, optional
+        A list of strings specifying the order of columns in the heatmap.
+    cmap : str or matplotlib.colors.Colormap, optional
+        The colormap for the heatmap. Defaults to 'Reds'.
+    save : str, optional
+        A filename to save the heatmap. If provided, the heatmap is saved in the 'figures' directory with 'CIA_' prefix.
+
     Returns
     -------
-    
-    sns.heatmap(): AxesSubplot
-        a Axesubplot containing the percentages of cells classified with a given method in cell groups.
+    matplotlib.axes.Axes or None
+        A heatmap AxesSubplot object is returned if `save` is None. Otherwise, the plot is saved to a file, and None is returned.
+
+    Examples
+    --------
+    >>> group_composition(adata, 'method_labels', 'reference_labels')
     """
-    df=pd.crosstab(data.obs[groups_obs], data.obs[classification_obs])
-    df=round((df/np.array(df.sum(axis=1)).reshape(len(df.index),1))*100,2)
-    if columns_order!=None:
-        df=df[columns_order]
-        if save!=None:
-            if not os.path.exists('./figures'):
-                os.makedirs('figures')
-            return sns.heatmap(df, cmap=cmap, annot=True).get_figure().savefig("figures/CIA_"+save)
-    return sns.heatmap(df, cmap=cmap, annot=True)    
- 
+    # Compute the cross-tabulation of group memberships
+    df = pd.crosstab(data.obs[groups_obs], data.obs[classification_obs])
+    df = round((df / np.array(df.sum(axis=1)).reshape(len(df.index), 1)) * 100, 2)
 
-def grouped_distributions(data, columns_obs, groups_obs, cmap='Reds', scale_medians=None, save=None):
-    
-    """ 
-    By selecting AnnData.obs columns, this function plots a heatmap showing the medians of their values in cell groups and it prints a statistical report. For each cell group, a two-sided Wilcoxon test is perfomed to evaluate if the distribution with the highest median is different from the others. For each selected AnnData.obs columns set of values, grouped by cell groups, a two-sided Mann-Whitney U test is performed to evaluate if the distribution in the cell group having the highest median is different from the other groups distributions.
-           
-    Parameters
-    ----------
-     
-    data: anndata.AnnData
-        an AnnData object.
-    columns_obs: list(str)
-        a string specifying the AnnData.obs columns where the values of interest are stored.
-    groups_obs: str
-        a string specifying the AnnData.obs where the cell labels are stored.    
-    cmap: str or matplotlib.colors.Colormap
-        the mapping from data values to color space. 
-    scale_medians: str or None
-        a parameter to set the scaling type of median values (None, 'row-wise', 'column-wise') 
-    save: str
-        a string specifying the file name. In the working directory, if not present, 'figures' directory will be created and a file with the prefix 'CIA_' will be saved in it.
-    
-    Returns
-    -------
-    
-    sns.heatmap(): AxesSubplot
-        a Axesubplot containing a heatmap of the score medians in cell groups.
-    """
-    grouped_df=data.obs.groupby(groups_obs).median()
-    grouped_df=grouped_df[columns_obs]
-    if scale_medians!=None:
-        if scale_medians=='row-wise':
-            grouped_df=grouped_df.transpose()/np.array(grouped_df.sum(axis=1))
-            grouped_df=grouped_df.transpose()
-        if scale_medians=='column-wise':
-            grouped_df=grouped_df/np.array(grouped_df.sum(axis=0))
-   
-    
-    subsets={}
-    results={}
-    print('Performing Wilcoxon test on each cell group ...')
-    combs=list(itertools.permutations(columns_obs,2))
-    count=0
-    for i in data.obs[groups_obs].cat.categories:
-        subsets[i]= data[data.obs[groups_obs]==i].obs[columns_obs]
-        pos=subsets[i].median().values.argmax()
-        
-        for j in combs:
-            if ((sum(subsets[i][j[0]])!=0) & (sum(subsets[i][j[1]])!=0)):
-                result=scipy.stats.wilcoxon(subsets[i][j[0]], subsets[i][j[1]], alternative='two-sided')
-                if result[1] >= 0.01 and j[0]==subsets[i].median().index[pos]:
-                            count+=1
-                            print('WARNING in cell group '+i+': '+ j[0]+' values are not significantly different from '+j[1]+' values.')
-    if count==0:
-        print('For each cell group there is a distribution significantly higher than the others (p<0.01)')
+    # Reorder columns if specified
+    if columns_order:
+        df = df.reindex(columns=columns_order)
 
-    print('')
-    print('Performing Mann-Whitney U test on each selected AnnData.obs column ...')
-    combs=list(itertools.permutations(data.obs[groups_obs].cat.categories,2))
-    count=0
-    for i in columns_obs:
-        sign={}
-        l=[]
-        for c in data.obs[groups_obs].cat.categories:
-            l.append(subsets[c][i].values)
-        sign[i]=pd.DataFrame(l).transpose()
-        sign[i].columns=data.obs[groups_obs].cat.categories
-        pos=sign[i].median().argmax()
-        for j in combs:
-            result=scipy.stats.mannwhitneyu(subsets[j[0]][i], subsets[j[1]][i], alternative='two-sided')
-            if result[1] >= 0.01 and j[0]==sign[i].median().index[pos]:
-                count+=1
-                print('WARNING in '+i+' distribution: values in '+ j[0]+' group are not significantly different from values in '+j[1]+' group')  
-                print('(p= '+str(result[1])+')')
-    if count==0:
-        print('For each distribution, there is only a cell group in which values are higher with respect to all the other groups  (p<0.01)')
-            
+    # Plot heatmap
+    heatmap = sns.heatmap(df, cmap=cmap, annot=True)
 
-    if save!=None:
+    # Save the figure if `save` is provided
+    if save:
         if not os.path.exists('./figures'):
             os.makedirs('figures')
-        return sns.heatmap(grouped_df, cmap=cmap, annot=True).get_figure().savefig("figures/CIA_"+save)
-    return sns.heatmap(grouped_df, cmap=cmap, annot=True)    
+        fig = heatmap.get_figure()
+        fig.savefig(f"figures/CIA_{save}")
+        plt.close(fig)  # Close the figure to prevent display in notebook environments
+        return None
+
+    return heatmap
+
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import scipy.stats
+import itertools
+import os
+
+def grouped_distributions(data, columns_obs, groups_obs, cmap='Reds', scale_medians=None, save=None):
+    """
+    Plots a heatmap of median values for selected columns in AnnData.obs across cell groups and performs statistical tests to evaluate the differences in distributions between these groups. 
+    A two-sided Wilcoxon test is conducted for each cell group to assess whether the distribution with the highest median significantly differs from the others.
+    Additionally, for each selected column in AnnData.obs, a two-sided Mann-Whitney U test is carried out to determine if the distribution in the cell group with the highest median is significantly different from those in the other groups. 
+    If a test fails (p >= 0.01), a message is printed.
+    
+    Parameters
+    ----------
+    data : anndata.AnnData
+        An AnnData object containing the cell data.
+    columns_obs : list of str
+        Column names in AnnData.obs where the values of interest are stored.
+    groups_obs : str
+        Column name in AnnData.obs where the cell group labels are stored.
+    cmap : str or matplotlib.colors.Colormap, optional
+        Colormap for the heatmap. Defaults to 'Reds'.
+    scale_medians : str, optional
+        How to scale the median values in the heatmap. Options: 'row-wise', 'column-wise', or None.
+    save : str, optional
+        Filename to save the heatmap. If provided, saves the heatmap in 'figures' directory with 'CIA_' prefix.
+
+    Returns
+    -------
+    None or AxesSubplot
+        If `save` is provided, the heatmap is saved and None is returned. Otherwise, returns the AxesSubplot object.
+   
+    Example
+    -------
+    >>> import scanpy as sc
+    >>> adata = sc.read_h5ad('your_data_file.h5ad')  # Load your AnnData file
+    >>> adata.obs['group'] = ['A', 'B', 'A', 'B']  # Example group labels
+    >>> adata.obs['column_obs1'] = [1, 2, 3, 4]  # Example feature values
+    >>> adata.obs['column_obs2'] = [4, 3, 2, 1]  # Another example feature values
+    >>> grouped_distributions(adata, ['column_obs1', 'column_obs2'], 'group', cmap='viridis')
+    """
+
+    # Compute the median values across the groups and select specified columns
+    grouped_df = data.obs.groupby(groups_obs)[columns_obs].median()
+
+    # Scale the medians if required
+    if scale_medians == 'row-wise':
+        grouped_df = grouped_df.div(grouped_df.sum(axis=1), axis=0)
+    elif scale_medians == 'column-wise':
+        grouped_df = grouped_df.div(grouped_df.sum(axis=0), axis=1)
+
+    # Statistical analysis
+    print('Performing Wilcoxon test on each cell group ...')
+    for group in data.obs[groups_obs].unique():
+        group_data = data[data.obs[groups_obs] == group]
+        for comb in itertools.combinations(columns_obs, 2):
+            x, y = group_data.obs[comb[0]], group_data.obs[comb[1]]
+            if len(x) > 0 and len(y) > 0:
+                stat, p_value = scipy.stats.wilcoxon(x, y, alternative='two-sided')
+                if p_value >= 0.01:
+                    print(f'Non-significant difference detected between {comb[0]} and {comb[1]} in group {group}.')
+
+    print('Performing Mann-Whitney U test on each selected AnnData.obs column ...')
+    combs = list(itertools.permutations(data.obs[groups_obs].unique(), 2))
+    for column in columns_obs:
+        for group_comb in combs:
+            x, y = data[data.obs[groups_obs] == group_comb[0]].obs[column], data[data.obs[groups_obs] == group_comb[1]].obs[column]
+            if len(x) > 0 and len(y) > 0:
+                stat, p_value = scipy.stats.mannwhitneyu(x, y, alternative='two-sided')
+                if p_value >= 0.01:
+                    print(f'WARNING in {column} distribution: values in {group_comb[0]} group are not significantly different from values in {group_comb[1]} group (p= {p_value:.3f}).')
+
+    # Plotting the heatmap
+    heatmap = sns.heatmap(grouped_df, cmap=cmap, annot=True)
+
+    # Save the heatmap if the filename is provided
+    if save:
+        if not os.path.exists('./figures'):
+            os.makedirs('./figures')
+        heatmap.get_figure().savefig(f"./figures/CIA_{save}")
+        plt.close(heatmap.get_figure())  # Close the figure to free up memory
+        return None
+
+    return heatmap
+
+
 
 def classification_metrics(data, classification_obs, groups_obs):
-    """ 
-    Computes the main metrics of classification by comparing labels of cells classified with given methods (methods of interest) and labels assigned with a different one (reference method).
+    """
+    Computes the main metrics of classification by comparing labels of cells classified with given methods 
+    (methods of interest) to labels assigned with a different one (reference method).
     NB: labels must be correspondent!
            
     Parameters
     ----------
-     
-    data: anndata.AnnData
-        an AnnData object.
-        
-    classification_obs: list(str)
-        a list of string specifying the AnnData.obs columns where the labels assigned by the methods of interest are stored.
-    groups_obs: str
-        a string specifying the AnnData.obs where the labels assigned by the reference method.      
+    data : anndata.AnnData
+        An AnnData object containing the cell data.
+    classification_obs : list of str
+        A list of strings specifying the AnnData.obs columns where the labels assigned by the methods of interest are stored.
+    groups_obs : str
+        A string specifying the AnnData.obs column where the labels assigned by the reference method are stored.      
     
     Returns
     -------
+    report : pandas.DataFrame
+        A pandas.DataFrame containing the overall sensitivity (SE), specificity (SP), precision (PR), 
+        accuracy (ACC), and F1-score (F1) of the selected classification methods.
     
-    report: pandas.DataFrame
-        a pandas.DataFame containing the overall sensitivity (SE), specificity (SP), precision (PR), accuracy (ACC) and F1-score (F1) of the selected classification methods.
+    Example
+    -------
+    >>> import scanpy as sc
+    >>> adata = sc.read_h5ad('your_data_file.h5ad')  # Load your AnnData file
+    >>> adata.obs['method1'] = ['label1', 'label2', 'label1', 'label2']  # Example classification
+    >>> adata.obs['method2'] = ['label1', 'label1', 'label2', 'label2']  # Another example classification
+    >>> adata.obs['reference'] = ['label1', 'label1', 'label2', 'label2']  # Reference classification
+    >>> classification_metrics(adata, ['method1', 'method2'], 'reference')
     """
-        
     report={}
     for m in classification_obs:
         SE=[]
@@ -190,25 +215,33 @@ def classification_metrics(data, classification_obs, groups_obs):
 
 def grouped_classification_metrics(data, classification_obs, groups_obs):
     """ 
-    Computes the main metrics of classification by comparing labels of cells classified with a given method (method of interest) and labels assigned with a different one (reference method) for each group defined by the latter.
-    NB: labels must be correspondent!
+    Computes the main metrics of classification for each group defined by the reference method,
+    comparing the labels from the method of interest with the reference labels.
+    NB: Corresponding labels are assumed between methods!
            
     Parameters
     ----------
-     
-    data: anndata.AnnData
-        an AnnData object.
-        
-    classification_obs: str
-        a string specifying the AnnData.obs columns where the labels assigned by the method of interest are stored.
-    groups_obs: str
-        a string specifying the AnnData.obs where the labels assigned by the reference method.      
+    data : anndata.AnnData
+        An AnnData object containing the cell data.
+    classification_obs : str
+        The AnnData.obs column where the labels assigned by the method of interest are stored.
+    groups_obs : str
+        The AnnData.obs column where the labels assigned by the reference method are stored.      
     
     Returns
     -------
-    
-    report: pandas.DataFrame
-        a pandas.DataFame containing the per-group sensitivity (SE), specificity (SP), precision (PR), accuracy (ACC) and F1-score (F1) of the selected classification method.
+    report : pandas.DataFrame
+        A DataFrame containing the per-group sensitivity (SE), specificity (SP), precision (PR),
+        accuracy (ACC), and F1-score (F1) of the selected classification method.
+
+    Example
+    -------
+    >>> import scanpy as sc
+    >>> adata = sc.read_h5ad('your_data_file.h5ad')  # Load your AnnData file
+    >>> classification_obs = 'predicted_labels'  # Example classification column
+    >>> groups_obs = 'actual_labels'  # Reference classification column
+    >>> metrics_report = grouped_classification_metrics(adata, classification_obs, groups_obs)
+    >>> print(metrics_report)
     """
  
     report={}

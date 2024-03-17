@@ -101,34 +101,79 @@ def filter_degs(data, groupby, uns_key='rank_genes_groups', direction='up', logF
     >>> filtered_genes = filter_degs(adata, 'louvain', direction='up', logFC=1, perc=10, mean=0.1)
     >>> print(filtered_genes['0'])  # Show filtered genes for the first group
     """
-    if direction not in ['up', 'down']:
-        raise ValueError('direction must be "up" or "down".')
 
-    signatures_dict = {}
+    signatures_dict={}
     for group in data.obs[groupby].cat.categories:
-        degs = data.uns[uns_key]['names'][group]
-        lfc = data.uns[uns_key]['logfoldchanges'][group]
-        cells_expr = data.raw[:, degs].X
+    #for group in data.uns[uns_key]['names'].dtype.names:
+        degs=data.uns[uns_key]['names'][group] 
 
-        if scipy.sparse.issparse(cells_expr):
-            cells_expr = cells_expr.todense()
 
-        n_cells = sum(data.obs[groupby] == group)
-        cells_percentage = (np.array(cells_expr > 0).sum(axis=0) / n_cells * 100).flatten()
-        gene_mean = cells_expr.mean(axis=0).flatten()
+        n_cells=sum(data.obs[groupby]==group)
 
-        if direction == 'up':
-            filter_cond = (lfc >= logFC) & (cells_percentage >= perc) & (gene_mean >= mean)
-        else:  # 'down'
-            filter_cond = (lfc <= logFC) & (cells_percentage <= perc) & (gene_mean <= mean)
 
-        if scores is not None:
-            gene_scores = data.uns[uns_key]['scores'][group]
-            filter_cond &= (gene_scores >= scores) if direction == 'up' else (gene_scores <= scores)
+        
+        if direction=='up':
+            
+            order=pd.DataFrame(data.uns[uns_key]['logfoldchanges'][group]).sort_values(by=0,ascending=False).index
+            degs= degs[order]
 
-        filtered_genes = degs[filter_cond]
-        signatures_dict[group] = filtered_genes.tolist()
+            if scipy.sparse.issparse(data.raw.X):
+                cells = (np.array(data.raw[data.obs[groupby].isin([group])][:,degs.tolist()].X.todense() > 0).sum(axis=0)/n_cells*100)
+            else:
+                cells = (np.array(data.raw[data.obs[groupby].isin([group])][:,degs.tolist()].X > 0).sum(axis=0)/n_cells*100)
+            cells =(cells >= perc)
+            
+            gene_mean = np.ravel(data.raw[data.obs[groupby].isin([group])][:,degs.tolist()].X.mean(0))
+            gene_mean = (gene_mean >= mean )
+            
+            lfc= data.uns[uns_key]['logfoldchanges'][group]
+            lfc= (lfc[order] >=logFC)
+            
+            filters=[cells, gene_mean, lfc]
+            
+            if scores!=None:
+                s= data.uns[uns_key]['scores'][group]
+                s= (s[order] >=scores)
+                filters.append(s)
+            
 
+            filters=np.bitwise_and.reduce(filters)
+            signatures_dict[group]= degs[filters].tolist()
+            
+            
+
+            
+        elif direction=='down':
+
+            order=pd.DataFrame(data.uns[uns_key]['logfoldchanges'][group]).sort_values(by=0,ascending=False).index
+            degs= degs[order]
+            
+            if scipy.sparse.issparse(data.raw.X):
+                cells = (np.array(data.raw[data.obs[groupby].isin([group])][:,degs.tolist()].X.todense() > 0).sum(axis=0)/n_cells*100)
+            else:
+                cells = (np.array(data.raw[data.obs[groupby].isin([group])][:,degs.tolist()].X> 0).sum(axis=0)/n_cells*100)
+            cells =(cells <= perc)
+            
+            gene_mean = np.ravel(data.raw[data.obs[groupby].isin([group])][:,degs.tolist()].X.mean(0))
+            gene_mean = (gene_mean <= mean )
+            
+            lfc= data.uns[uns_key]['logfoldchanges'][group]
+            lfc= (lfc[order] <=logFC)
+            
+            filters=[cells, gene_mean, lfc]
+            
+            if scores!=None:
+                s= data.uns[uns_key]['scores'][group]
+                s= (s[order] <=scores)
+                filters.append(s)
+            
+
+            filters=np.bitwise_and.reduce(filters)
+            signatures_dict[group]= degs[filters].tolist()
+            
+        else:
+            raise ValueError('direction must be "up" or "down".')
+        
     return signatures_dict
 
 def save_gmt(signatures_dict, file):
@@ -144,29 +189,3 @@ def save_gmt(signatures_dict, file):
         filepath of gmt file. See pandas.DataFrame.to_csv documentation.  
     """
     pd.DataFrame.from_dict(signatures_dict, orient='index').to_csv(file, sep='\t', header=None)
-import pandas as pd
-
-def save_gmt(signatures_dict, file_path):
-    """
-    Saves a dictionary of gene signatures to a file in GMT format, suitable for use with 
-    signature scoring and classification functions.
-
-    Parameters
-    ----------
-    signatures_dict : dict
-        A dictionary with signature names as keys and lists of gene names as values.
-    file_path : str
-        The file path where the GMT file will be saved. The file will be saved in tab-separated format.
-
-    Example
-    -------
-    >>> signatures_dict = {
-    >>>     'signature1': ['gene1', 'gene2', 'gene3'],
-    >>>     'signature2': ['gene4', 'gene5', 'gene6']
-    >>> }
-    >>> save_gmt(signatures_dict, 'signatures.gmt')
-
-    This will save the signatures in 'signatures.gmt' in GMT format.
-    """
-    # Transform the dictionary into a DataFrame and save it in GMT format
-    pd.DataFrame.from_dict(signatures_dict, orient='index').to_csv(file_path, sep='\t', header=False)

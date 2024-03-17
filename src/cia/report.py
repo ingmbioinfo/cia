@@ -56,19 +56,12 @@ def group_composition(data, classification_obs, groups_obs, columns_order=None, 
 
     return heatmap
 
-import pandas as pd
-import numpy as np
-import seaborn as sns
-import scipy.stats
-import itertools
-import os
-
 def grouped_distributions(data, columns_obs, groups_obs, cmap='Reds', scale_medians=None, save=None):
     """
-    Plots a heatmap of median values for selected columns in AnnData.obs across cell groups and performs statistical tests to evaluate the differences in distributions between these groups. 
-    A two-sided Wilcoxon test is conducted for each cell group to assess whether the distribution with the highest median significantly differs from the others.
-    Additionally, for each selected column in AnnData.obs, a two-sided Mann-Whitney U test is carried out to determine if the distribution in the cell group with the highest median is significantly different from those in the other groups. 
-    If a test fails (p >= 0.01), a message is printed.
+    Plots a heatmap of median values for selected columns in AnnData.obs across cell groups and performs statistical tests 
+    to evaluate the differences in distributions. The Wilcoxon test checks if each group's signature score is significantly 
+    higher than others in the same group. The Mann-Whitney U test checks if each signature has the highest score values 
+    in the corresponding group compared to all other groups.
     
     Parameters
     ----------
@@ -89,67 +82,74 @@ def grouped_distributions(data, columns_obs, groups_obs, cmap='Reds', scale_medi
     -------
     None or AxesSubplot
         If `save` is provided, the heatmap is saved and None is returned. Otherwise, returns the AxesSubplot object.
-   
-    Example
-    -------
-    >>> import scanpy as sc
-    >>> adata = sc.read_h5ad('your_data_file.h5ad')  # Load your AnnData file
-    >>> adata.obs['group'] = ['A', 'B', 'A', 'B']  # Example group labels
-    >>> adata.obs['column_obs1'] = [1, 2, 3, 4]  # Example feature values
-    >>> adata.obs['column_obs2'] = [4, 3, 2, 1]  # Another example feature values
-    >>> grouped_distributions(adata, ['column_obs1', 'column_obs2'], 'group', cmap='viridis')
     """
 
-    # Compute the median values across the groups and select specified columns
-    grouped_df = data.obs.groupby(groups_obs)[columns_obs].median()
-
-    # Scale the medians if required
-    if scale_medians == 'row-wise':
-        grouped_df = grouped_df.div(grouped_df.sum(axis=1), axis=0)
-    elif scale_medians == 'column-wise':
-        grouped_df = grouped_df.div(grouped_df.sum(axis=0), axis=1)
-
-    # Statistical analysis
+    grouped_df=data.obs.groupby(groups_obs).median()
+    grouped_df=grouped_df[columns_obs]
+    if scale_medians!=None:
+        if scale_medians=='row-wise':
+            grouped_df=grouped_df.transpose()/np.array(grouped_df.sum(axis=1))
+            grouped_df=grouped_df.transpose()
+        if scale_medians=='column-wise':
+            grouped_df=grouped_df/np.array(grouped_df.sum(axis=0))
+   
+    
+    subsets={}
+    results={}
     print('Performing Wilcoxon test on each cell group ...')
-    for group in data.obs[groups_obs].unique():
-        group_data = data[data.obs[groups_obs] == group]
-        for comb in itertools.combinations(columns_obs, 2):
-            x, y = group_data.obs[comb[0]], group_data.obs[comb[1]]
-            if len(x) > 0 and len(y) > 0:
-                stat, p_value = scipy.stats.wilcoxon(x, y, alternative='two-sided')
-                if p_value >= 0.01:
-                    print(f'Non-significant difference detected between {comb[0]} and {comb[1]} in group {group}.')
+    combs=list(itertools.permutations(columns_obs,2))
+    count=0
+    for i in data.obs[groups_obs].cat.categories:
+        subsets[i]= data[data.obs[groups_obs]==i].obs[columns_obs]
+        pos=subsets[i].median().values.argmax()
+        
+        for j in combs:
+            if ((sum(subsets[i][j[0]])!=0) & (sum(subsets[i][j[1]])!=0)):
+                result=scipy.stats.wilcoxon(subsets[i][j[0]], subsets[i][j[1]], alternative='two-sided')
+                if result[1] >= 0.01 and j[0]==subsets[i].median().index[pos]:
+                            count+=1
+                            print('WARNING in cell group '+i+': '+ j[0]+' values are not significantly different from '+j[1]+' values.')
+    if count==0:
+        print('For each cell group there is a distribution significantly higher than the others (p<0.01)')
 
+    print('')
     print('Performing Mann-Whitney U test on each selected AnnData.obs column ...')
-    combs = list(itertools.permutations(data.obs[groups_obs].unique(), 2))
-    for column in columns_obs:
-        for group_comb in combs:
-            x, y = data[data.obs[groups_obs] == group_comb[0]].obs[column], data[data.obs[groups_obs] == group_comb[1]].obs[column]
-            if len(x) > 0 and len(y) > 0:
-                stat, p_value = scipy.stats.mannwhitneyu(x, y, alternative='two-sided')
-                if p_value >= 0.01:
-                    print(f'WARNING in {column} distribution: values in {group_comb[0]} group are not significantly different from values in {group_comb[1]} group (p= {p_value:.3f}).')
+    combs=list(itertools.permutations(data.obs[groups_obs].cat.categories,2))
+    count=0
+    for i in columns_obs:
+        sign={}
+        l=[]
+        for c in data.obs[groups_obs].cat.categories:
+            l.append(subsets[c][i].values)
+        sign[i]=pd.DataFrame(l).transpose()
+        sign[i].columns=data.obs[groups_obs].cat.categories
+        pos=sign[i].median().argmax()
+        for j in combs:
+            result=scipy.stats.mannwhitneyu(subsets[j[0]][i], subsets[j[1]][i], alternative='two-sided')
+            if result[1] >= 0.01 and j[0]==sign[i].median().index[pos]:
+                count+=1
+                print('WARNING in '+i+' distribution: values in '+ j[0]+' group are not significantly different from values in '+j[1]+' group')  
+                print('(p= '+str(result[1])+')')
+    if count==0:
+        print('For each distribution, there is only a cell group in which values are higher with respect to all the other groups  (p<0.01)')
+            
 
-    # Plotting the heatmap
-    heatmap = sns.heatmap(grouped_df, cmap=cmap, annot=True)
-
-    # Save the heatmap if the filename is provided
-    if save:
+    if save!=None:
         if not os.path.exists('./figures'):
-            os.makedirs('./figures')
-        heatmap.get_figure().savefig(f"./figures/CIA_{save}")
-        plt.close(heatmap.get_figure())  # Close the figure to free up memory
-        return None
-
-    return heatmap
+            os.makedirs('figures')
+        return sns.heatmap(grouped_df, cmap=cmap, annot=True).get_figure().savefig("figures/CIA_"+save)
+    return sns.heatmap(grouped_df, cmap=cmap, annot=True)    
 
 
 
-def classification_metrics(data, classification_obs, groups_obs):
+
+
+def classification_metrics(data, classification_obs, groups_obs, unassigned_label=''):
     """
     Computes the main metrics of classification by comparing labels of cells classified with given methods 
     (methods of interest) to labels assigned with a different one (reference method).
-    NB: labels must be correspondent!
+    Cells labeled as unassigned_label in any method of interest are excluded from the metrics calculation.
+    Additionally, if present, the percentage of unassigned cells for each classification method is calculated and reported.
            
     Parameters
     ----------
@@ -158,13 +158,17 @@ def classification_metrics(data, classification_obs, groups_obs):
     classification_obs : list of str
         A list of strings specifying the AnnData.obs columns where the labels assigned by the methods of interest are stored.
     groups_obs : str
-        A string specifying the AnnData.obs column where the labels assigned by the reference method are stored.      
-    
+        A string specifying the AnnData.obs column where the labels assigned by the reference method are stored.
+    unassigned_label : str, optional
+        The label used to mark unassigned cells in the classification columns. Cells with this label will be excluded 
+        from the metrics calculation. Default is an empty string, which means no cells are excluded based on their label.
+
     Returns
     -------
     report : pandas.DataFrame
         A pandas.DataFrame containing the overall sensitivity (SE), specificity (SP), precision (PR), 
-        accuracy (ACC), and F1-score (F1) of the selected classification methods.
+        accuracy (ACC), F1-score (F1), and, if specified, the percentage of unassigned cells (%UN) for each classification method 
+        compared to the reference method.
     
     Example
     -------
@@ -173,51 +177,53 @@ def classification_metrics(data, classification_obs, groups_obs):
     >>> adata.obs['method1'] = ['label1', 'label2', 'label1', 'label2']  # Example classification
     >>> adata.obs['method2'] = ['label1', 'label1', 'label2', 'label2']  # Another example classification
     >>> adata.obs['reference'] = ['label1', 'label1', 'label2', 'label2']  # Reference classification
-    >>> classification_metrics(adata, ['method1', 'method2'], 'reference')
+    >>> classification_metrics(adata, ['method1', 'method2'], 'reference', unassigned_label='Unassigned')
     """
-    report={}
+    report = {}
+    
     for m in classification_obs:
-        SE=[]
-        SP=[]
-        PR=[]
-        ACC=[]
-        F1=[]
+        SE, SP, PR, ACC, F1, UN = [], [], [], [], [], []
 
+        total_cells = len(data.obs)
+        unassigned_count = sum(data.obs[m] == unassigned_label)
+        UN.append(round((unassigned_count / total_cells) * 100,2))  # Calculate percentage of unassigned cells
 
+        filtered_data = data[data.obs[m] != unassigned_label]
 
-        TP_l=[]
-        TN_l=[]
-        FP_l=[]
-        FN_l=[]
+        TP_l, TN_l, FP_l, FN_l = [], [], [], []
 
-        for i in data.obs[groups_obs].cat.categories:
-            TP_l.append(sum((data.obs[m]==i)& (data.obs[groups_obs]==i)))
-            TN_l.append(sum((data.obs[m]!=i)& (data.obs[groups_obs]!=i)))
-            FP_l.append(sum((data.obs[m]==i)& (data.obs[groups_obs]!=i)))
-            FN_l.append(sum((data.obs[m]!=i)& (data.obs[groups_obs]==i)))
+        for i in filtered_data.obs[groups_obs].cat.categories:
+            TP_l.append(sum((filtered_data.obs[m] == i) & (filtered_data.obs[groups_obs] == i)))
+            TN_l.append(sum((filtered_data.obs[m] != i) & (filtered_data.obs[groups_obs] != i)))
+            FP_l.append(sum((filtered_data.obs[m] == i) & (filtered_data.obs[groups_obs] != i)))
+            FN_l.append(sum((filtered_data.obs[m] != i) & (filtered_data.obs[groups_obs] == i)))
 
-        TP=sum(TP_l)
-        TN=sum(TN_l)
-        FP=sum(FP_l)
-        FN=sum(FN_l)
+        TP = sum(TP_l)
+        TN = sum(TN_l)
+        FP = sum(FP_l)
+        FN = sum(FN_l)
 
-        SE.append(TP/(TP+FN))
-        SP.append(TN/(TN+FP))
-        PR.append(TP/(TP+FP))
-        ACC.append((TN+TP)/(TN+TP+FN+FP))
-        F1.append((2*TP)/(2*TP+FN+FP))
-        report[m]= np.array([SE,SP,PR,ACC,F1]).flat
+        SE.append(TP / (TP + FN))
+        SP.append(TN / (TN + FP))
+        PR.append(TP / (TP + FP))
+        ACC.append((TN + TP) / (TN + TP + FN + FP))
+        F1.append((2 * TP) / (2 * TP + FN + FP))
 
-    report=pd.DataFrame(report)
-    report.index=['SE', 'SP', 'PR', 'ACC', 'F1' ]
-    report=report.transpose()
+        metrics = np.array([SE, SP, PR, ACC, F1, UN]).flat
+        report[m] = metrics
+
+    report = pd.DataFrame(report)
+    report.index = ['SE', 'SP', 'PR', 'ACC', 'F1', '%UN']
+    report = report.transpose()
+    if sum(report['%UN'])==0:
+        del report['%UN']
     return report
 
-def grouped_classification_metrics(data, classification_obs, groups_obs):
-    """ 
+def grouped_classification_metrics(data, classification_obs, groups_obs, unassigned_label=''):
+    """
     Computes the main metrics of classification for each group defined by the reference method,
-    comparing the labels from the method of interest with the reference labels.
-    NB: Corresponding labels are assumed between methods!
+    comparing the labels from the method of interest with the reference labels. Additionally,
+    if specified, computes the percentage of unlabelled cells for each group.
            
     Parameters
     ----------
@@ -226,54 +232,47 @@ def grouped_classification_metrics(data, classification_obs, groups_obs):
     classification_obs : str
         The AnnData.obs column where the labels assigned by the method of interest are stored.
     groups_obs : str
-        The AnnData.obs column where the labels assigned by the reference method are stored.      
+        The AnnData.obs column where the labels assigned by the reference method are stored.
     
     Returns
     -------
     report : pandas.DataFrame
         A DataFrame containing the per-group sensitivity (SE), specificity (SP), precision (PR),
-        accuracy (ACC), and F1-score (F1) of the selected classification method.
-
+        accuracy (ACC), F1-score (F1), and if present, the percentage of unassigned cells (%UN) for the selected classification method.
+    
     Example
     -------
     >>> import scanpy as sc
     >>> adata = sc.read_h5ad('your_data_file.h5ad')  # Load your AnnData file
-    >>> classification_obs = 'predicted_labels'  # Example classification column
-    >>> groups_obs = 'actual_labels'  # Reference classification column
+    >>> classification_obs = 'predicted_labels'
+    >>> groups_obs = 'actual_labels'
     >>> metrics_report = grouped_classification_metrics(adata, classification_obs, groups_obs)
-    >>> print(metrics_report)
     """
- 
-    report={}
-    SE=[]
-    SP=[]
-    PR=[]
-    ACC=[]
-    F1=[]
-    TP_l=[]
-    TN_l=[]
-    FP_l=[]
-    FN_l=[]
+    report = []
 
-    for i in data.obs[groups_obs].cat.categories:
-        TP_l.append(sum((data.obs[classification_obs]==i)& (data.obs[groups_obs]==i)))
-        TN_l.append(sum((data.obs[classification_obs]!=i)& (data.obs[groups_obs]!=i)))
-        FP_l.append(sum((data.obs[classification_obs]==i)& (data.obs[groups_obs]!=i)))
-        FN_l.append(sum((data.obs[classification_obs]!=i)& (data.obs[groups_obs]==i)))
-    
-    TP_l=np.array(TP_l)
-    TN_l=np.array(TN_l)
-    FP_l=np.array(FP_l)
-    FN_l=np.array(FN_l)
-        
-    SE=TP_l/(TP_l+FN_l)
-    SP=TN_l/(TN_l+FP_l)
-    PR=TP_l/(TP_l+FP_l)
-    ACC=(TN_l+TP_l)/(TN_l+TP_l+FN_l+FP_l)
-    F1=(2*TP_l)/(2*TP_l+FN_l+FP_l)
-    report= np.array([SE,SP,PR,ACC,F1])
-    report=pd.DataFrame(report)
-    report.index=['SE', 'SP', 'PR', 'ACC', 'F1' ]
-    report.columns= data.obs[groups_obs].cat.categories
-    report=report.transpose()
-    return report
+    for group in data.obs[groups_obs].cat.categories:
+        is_group = data.obs[groups_obs] == group
+        is_unassigned = data.obs[classification_obs] == unassigned_label
+
+        TP = np.sum(data.obs[classification_obs][is_group] == group)
+        TN = np.sum(data.obs[classification_obs][~is_group] != group)
+        FP = np.sum(data.obs[classification_obs][~is_group] == group)
+        FN = np.sum(data.obs[classification_obs][is_group] != group)
+
+        SE = TP / (TP + FN) if TP + FN else 0
+        SP = TN / (TN + FP) if TN + FP else 0
+        PR = TP / (TP + FP) if TP + FP else 0
+        ACC = (TP + TN) / (TP + TN + FP + FN) if TP + TN + FP + FN else 0
+        F1 = 2 * TP / (2 * TP + FP + FN) if 2 * TP + FP + FN else 0
+
+        # Calculate the percentage of unassigned cells for this group
+        group_total = np.sum(is_group)
+        unassigned_count = np.sum(is_unassigned & is_group)
+        UN = (unassigned_count / group_total) * 100 if group_total else 0
+
+        report.append([SE, SP, PR, ACC, F1, UN])
+
+    report_df = pd.DataFrame(report, columns=['SE', 'SP', 'PR', 'ACC', 'F1', '%UN'], index=data.obs[groups_obs].cat.categories)
+    if sum(report_df['%UN'])==0:
+        del report_df['%UN']
+    return report_df

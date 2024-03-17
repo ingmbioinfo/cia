@@ -174,7 +174,7 @@ def signature_score(data, signatures_input, score_mode='raw', return_df=False, n
         return scores_df
 
             
-def signature_based_classification(data, signatures_input, n_cpus=None, similarity_threshold=0.1, label_column='CIA prediction', unassigned_label='Unassigned'):
+def signature_based_classification(data, signatures_input, n_cpus=None, similarity_threshold=0, label_column='CIA prediction', unassigned_label='Unassigned'):
     """
     Classify cells in `data` based on gene signature scores.
 

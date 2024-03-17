@@ -15,16 +15,12 @@ except PackageNotFoundError:  # pragma: no cover
 finally:
     del version, PackageNotFoundError
     
-import numpy as np
-import anndata
-import pandas as pd
-import scanpy as sc
-import multiprocessing
-from functools import partial
-from scipy.sparse import issparse
-from scipy import sparse
-import time
 import seaborn as sns
+import numpy as np
+import pandas as pd
+from anndata import AnnData
+import time 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from .investigate import *
 from .report import *

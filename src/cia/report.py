@@ -6,7 +6,7 @@ import scipy
 import os
 
 
-def group_composition(data, classification_obs, groups_obs, columns_order=None, cmap='Reds', save=None):
+def group_composition(data, classification_obs, ref_obs, columns_order=None, cmap='Reds', save=None):
     """
     Plots a heatmap showing the percentages of cells classified with a given method (method of interest) in cell groups defined with a different one (reference method).
 
@@ -16,7 +16,7 @@ def group_composition(data, classification_obs, groups_obs, columns_order=None, 
         An AnnData object containing the cell classification data.
     classification_obs : str
         A string specifying the AnnData.obs column where the labels assigned by the method of interest are stored.
-    groups_obs : str
+    ref_obs : str
         A string specifying the AnnData.obs column where the labels assigned by the reference method are stored.
     columns_order : list of str, optional
         A list of strings specifying the order of columns in the heatmap.
@@ -35,7 +35,7 @@ def group_composition(data, classification_obs, groups_obs, columns_order=None, 
     >>> group_composition(adata, 'method_labels', 'reference_labels')
     """
     # Compute the cross-tabulation of group memberships
-    df = pd.crosstab(data.obs[groups_obs], data.obs[classification_obs])
+    df = pd.crosstab(data.obs[ref_obs], data.obs[classification_obs])
     df = round((df / np.array(df.sum(axis=1)).reshape(len(df.index), 1)) * 100, 2)
 
     # Reorder columns if specified
@@ -56,7 +56,7 @@ def group_composition(data, classification_obs, groups_obs, columns_order=None, 
 
     return heatmap
 
-def grouped_distributions(data, columns_obs, groups_obs, cmap='Reds', scale_medians=None, save=None):
+def grouped_distributions(data, columns_obs, ref_obs, cmap='Reds', scale_medians=None, save=None):
     """
     Plots a heatmap of median values for selected columns in AnnData.obs across cell groups and performs statistical tests 
     to evaluate the differences in distributions. The Wilcoxon test checks if each group's signature score is significantly 
@@ -69,7 +69,7 @@ def grouped_distributions(data, columns_obs, groups_obs, cmap='Reds', scale_medi
         An AnnData object containing the cell data.
     columns_obs : list of str
         Column names in AnnData.obs where the values of interest are stored.
-    groups_obs : str
+    ref_obs : str
         Column name in AnnData.obs where the cell group labels are stored.
     cmap : str or matplotlib.colors.Colormap, optional
         Colormap for the heatmap. Defaults to 'Reds'.
@@ -84,7 +84,7 @@ def grouped_distributions(data, columns_obs, groups_obs, cmap='Reds', scale_medi
         If `save` is provided, the heatmap is saved and None is returned. Otherwise, returns the AxesSubplot object.
     """
 
-    grouped_df=data.obs.groupby(groups_obs).median()
+    grouped_df=data.obs.groupby(ref_obs).median()
     grouped_df=grouped_df[columns_obs]
     if scale_medians!=None:
         if scale_medians=='row-wise':
@@ -99,8 +99,8 @@ def grouped_distributions(data, columns_obs, groups_obs, cmap='Reds', scale_medi
     print('Performing Wilcoxon test on each cell group ...')
     combs=list(itertools.permutations(columns_obs,2))
     count=0
-    for i in data.obs[groups_obs].cat.categories:
-        subsets[i]= data[data.obs[groups_obs]==i].obs[columns_obs]
+    for i in data.obs[ref_obs].cat.categories:
+        subsets[i]= data[data.obs[ref_obs]==i].obs[columns_obs]
         pos=subsets[i].median().values.argmax()
         
         for j in combs:
@@ -114,15 +114,15 @@ def grouped_distributions(data, columns_obs, groups_obs, cmap='Reds', scale_medi
 
     print('')
     print('Performing Mann-Whitney U test on each selected AnnData.obs column ...')
-    combs=list(itertools.permutations(data.obs[groups_obs].cat.categories,2))
+    combs=list(itertools.permutations(data.obs[ref_obs].cat.categories,2))
     count=0
     for i in columns_obs:
         sign={}
         l=[]
-        for c in data.obs[groups_obs].cat.categories:
+        for c in data.obs[ref_obs].cat.categories:
             l.append(subsets[c][i].values)
         sign[i]=pd.DataFrame(l).transpose()
-        sign[i].columns=data.obs[groups_obs].cat.categories
+        sign[i].columns=data.obs[ref_obs].cat.categories
         pos=sign[i].median().argmax()
         for j in combs:
             result=scipy.stats.mannwhitneyu(subsets[j[0]][i], subsets[j[1]][i], alternative='two-sided')
@@ -144,7 +144,7 @@ def grouped_distributions(data, columns_obs, groups_obs, cmap='Reds', scale_medi
 
 
 
-def classification_metrics(data, classification_obs, groups_obs, unassigned_label=''):
+def compute_classification_metrics(data, classification_obs, ref_obs, unassigned_label=''):
     """
     Computes the main metrics of classification by comparing labels of cells classified with given methods 
     (methods of interest) to labels assigned with a different one (reference method).
@@ -157,7 +157,7 @@ def classification_metrics(data, classification_obs, groups_obs, unassigned_labe
         An AnnData object containing the cell data.
     classification_obs : list of str
         A list of strings specifying the AnnData.obs columns where the labels assigned by the methods of interest are stored.
-    groups_obs : str
+    ref_obs : str
         A string specifying the AnnData.obs column where the labels assigned by the reference method are stored.
     unassigned_label : str, optional
         The label used to mark unassigned cells in the classification columns. Cells with this label will be excluded 
@@ -192,11 +192,11 @@ def classification_metrics(data, classification_obs, groups_obs, unassigned_labe
 
         TP_l, TN_l, FP_l, FN_l = [], [], [], []
 
-        for i in filtered_data.obs[groups_obs].cat.categories:
-            TP_l.append(sum((filtered_data.obs[m] == i) & (filtered_data.obs[groups_obs] == i)))
-            TN_l.append(sum((filtered_data.obs[m] != i) & (filtered_data.obs[groups_obs] != i)))
-            FP_l.append(sum((filtered_data.obs[m] == i) & (filtered_data.obs[groups_obs] != i)))
-            FN_l.append(sum((filtered_data.obs[m] != i) & (filtered_data.obs[groups_obs] == i)))
+        for i in filtered_data.obs[ref_obs].cat.categories:
+            TP_l.append(sum((filtered_data.obs[m] == i) & (filtered_data.obs[ref_obs] == i)))
+            TN_l.append(sum((filtered_data.obs[m] != i) & (filtered_data.obs[ref_obs] != i)))
+            FP_l.append(sum((filtered_data.obs[m] == i) & (filtered_data.obs[ref_obs] != i)))
+            FN_l.append(sum((filtered_data.obs[m] != i) & (filtered_data.obs[ref_obs] == i)))
 
         TP = sum(TP_l)
         TN = sum(TN_l)
@@ -219,7 +219,7 @@ def classification_metrics(data, classification_obs, groups_obs, unassigned_labe
         del report['%UN']
     return report
 
-def grouped_classification_metrics(data, classification_obs, groups_obs, unassigned_label=''):
+def grouped_classification_metrics(data, classification_obs, ref_obs, unassigned_label=''):
     """
     Computes the main metrics of classification for each group defined by the reference method,
     comparing the labels from the method of interest with the reference labels. Additionally,
@@ -231,7 +231,7 @@ def grouped_classification_metrics(data, classification_obs, groups_obs, unassig
         An AnnData object containing the cell data.
     classification_obs : str
         The AnnData.obs column where the labels assigned by the method of interest are stored.
-    groups_obs : str
+    ref_obs : str
         The AnnData.obs column where the labels assigned by the reference method are stored.
     
     Returns
@@ -245,13 +245,13 @@ def grouped_classification_metrics(data, classification_obs, groups_obs, unassig
     >>> import scanpy as sc
     >>> adata = sc.read_h5ad('your_data_file.h5ad')  # Load your AnnData file
     >>> classification_obs = 'predicted_labels'
-    >>> groups_obs = 'actual_labels'
-    >>> metrics_report = grouped_classification_metrics(adata, classification_obs, groups_obs)
+    >>> ref_obs = 'actual_labels'
+    >>> metrics_report = grouped_classification_metrics(adata, classification_obs, ref_obs)
     """
     report = []
 
-    for group in data.obs[groups_obs].cat.categories:
-        is_group = data.obs[groups_obs] == group
+    for group in data.obs[ref_obs].cat.categories:
+        is_group = data.obs[ref_obs] == group
         is_unassigned = data.obs[classification_obs] == unassigned_label
 
         TP = np.sum(data.obs[classification_obs][is_group] == group)
@@ -272,7 +272,7 @@ def grouped_classification_metrics(data, classification_obs, groups_obs, unassig
 
         report.append([SE, SP, PR, ACC, F1, UN])
 
-    report_df = pd.DataFrame(report, columns=['SE', 'SP', 'PR', 'ACC', 'F1', '%UN'], index=data.obs[groups_obs].cat.categories)
+    report_df = pd.DataFrame(report, columns=['SE', 'SP', 'PR', 'ACC', 'F1', '%UN'], index=data.obs[ref_obs].cat.categories)
     if sum(report_df['%UN'])==0:
         del report_df['%UN']
     return report_df

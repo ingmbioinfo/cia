@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CLUSTER INDEPENDENT ANNOTATION &mdash; CIA 0.0.post1.dev12+g0e070d6.d20240318 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b76e3c8a" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=3b7bfa81"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="License" href="../../license.html" />
+    <link rel="prev" title="cia package" href="../../api/cia.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            CIA
+          </a>
+              <div class="version">
+                0.0.post1.dev12+g0e070d6.d20240318
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html">CIA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html#installation">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">Documentation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">CLUSTER INDEPENDENT ANNOTATION</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#index">Index</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cia-input">CIA input</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#gene-signatures">Gene signatures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#anndata">AnnData</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#signature-score">Signature score</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#default-score">Default score</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scaled-score">Scaled score</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#signature-based-classification">Signature-based classification</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#default-classification">Default classification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#classification-with-similarity-threshold">Classification with similarity threshold</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#classification-performance-evaluation">Classification performance evaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tips">Tips</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#direct-inspection-of-msigdb-signatures">Direct inspection of MSigDB signatures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#majority-voting">Majority voting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#extraction-of-signatures-from-differentially-expressed-genes">Extraction of signatures from Differentially Expressed Genes</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#conclusion">Conclusion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#references">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">CIA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">CLUSTER INDEPENDENT ANNOTATION</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/tutorial/workflow/Cluster_Independent_Annotation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="cluster-independent-annotation">
+<h1>CLUSTER INDEPENDENT ANNOTATION<a class="headerlink" href="#cluster-independent-annotation" title="Link to this heading"></a></h1>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># import required modules</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">scanpy</span> <span class="k">as</span> <span class="nn">sc</span>
+<span class="kn">from</span> <span class="nn">cia</span> <span class="kn">import</span> <span class="n">investigate</span><span class="p">,</span> <span class="n">report</span><span class="p">,</span> <span class="n">utils</span><span class="p">,</span> <span class="n">external</span>
+</pre></div>
+</div>
+<section id="index">
+<h2>Index<a class="headerlink" href="#index" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#CIA-input">CIA input</a></p>
+<ul class="simple">
+<li><p><a class="reference external" href="#Gene-signatures">Gene signatures</a></p></li>
+<li><p><a class="reference external" href="#AnnData">AnnData</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#Signature-score">Signature score</a></p>
+<ul class="simple">
+<li><p><a class="reference external" href="#Default-score">Default score</a></p></li>
+<li><p><a class="reference external" href="#Scaled-score">Scaled score</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#Signature-based-classification">Signature-based classification</a></p>
+<ul class="simple">
+<li><p><a class="reference external" href="#Default-classification">Default classification</a></p></li>
+<li><p><a class="reference external" href="#Classification-with-similarity-threshold">Classification with similarity
+threshold</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#Classification-performance-evaluation">Classification performance
+evaluation</a></p></li>
+<li><p><a class="reference external" href="#Tips">Tips</a></p>
+<ul class="simple">
+<li><p><a class="reference external" href="#Direct-inspection-of-MSigDB-signatures">Direct inspection of MSigDB
+signatures</a></p></li>
+<li><p><a class="reference external" href="#Majority-voting">Majority voting</a></p></li>
+<li><p><a class="reference external" href="#Extraction-of-signatures-from-Differentially-Expressed-Genes">Extraction of signatures from Differentially Expressed
+Genes</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#Conclusion">Conclusion</a></p></li>
+<li><p><a class="reference external" href="#References">References</a></p></li>
+</ol>
+</section>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p><strong>Cluster Independent Annotation</strong> (<strong>CIA</strong>) is a classification method
+designed to <strong>assist researchers during the cell annotation step</strong> of
+scRNA-seq experiments. Given gene signatures as input, this classifier
+<strong>computes a signature score for each cell</strong> and <strong>compares the score
+values</strong> to assign a label to each single cell.</p>
+<p>This tool offers several advantages:</p>
+<ul class="simple">
+<li><p>It synthesizes the information of <strong>an entire signature expression
+into a single score value</strong>, avoiding the tedious inspection of
+individual marker genes from lengthy differentially expressed genes
+(DEGs) lists, which may not be cluster-specific individually.</p></li>
+<li><p>It makes possible the exploration of new signatures derived from your
+research for which training data for machine learning algorithms may
+not yet exist.</p></li>
+<li><p>It provides a classification for each cell that is <strong>completely
+independent of clustering</strong>, allowing it to be used alongside a
+clustering method to set a proper resolution value, thus yielding
+coherent and easily annotated cell groups.</p></li>
+<li><p><strong>It’s very fast</strong>: it can classify a large dataset (hundreds of
+thousands of cells) in just a few seconds since <strong>we have implemented
+the ability to parallelize processes</strong>.</p></li>
+<li><p>Being signature-based, this tool can deliver insights on <strong>any kind
+of biologically meaningful gene list</strong>, also enabling functional
+annotation.</p></li>
+<li><p>By normalizing for the gene signature length, it facilitates the
+<strong>comparison of gene sets of varying lengths</strong>, ranging <strong>from tens
+to thousands of genes</strong>.</p></li>
+</ul>
+<p>In this tutorial we exploited CIA functions to <strong>automatically
+annotate</strong><a class="reference external" href="https://scanpy.readthedocs.io/en/stable/generated/scanpy.datasets.pbmc3k.html">PBMC3K</a><strong>scRNA-seq
+datasetq</strong> at cellular level, starting from a set of gene signatures
+extracted from a <a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0092867421005833">PBMC
+atlas</a>.</p>
+<figure class="align-default" id="id1">
+<img alt="datasets.png" src="tutorial/workflow/attachment:datasets.png" />
+<figcaption>
+<p><span class="caption-text">datasets.png</span><a class="headerlink" href="#id1" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="cia-input">
+<h2>CIA input<a class="headerlink" href="#cia-input" title="Link to this heading"></a></h2>
+<p>Our method requires as input a <strong>dictionary containing the names of the
+signatures</strong> (e.g. cell type, cell state …) <strong>as keys and correspondent
+gene names as values</strong> and an
+<a class="reference external" href="https://anndata.readthedocs.io/en/latest/">AnnData</a> object with a
+<strong>raw expression matrix</strong> (AnnData.raw.X) to be classified.</p>
+<section id="gene-signatures">
+<h3>Gene signatures<a class="headerlink" href="#gene-signatures" title="Link to this heading"></a></h3>
+<p>In our study, we used the differentially expressed genes (DEGs) from Hao
+et al., 2021’s
+<a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0092867421005833">[1]</a>
+<strong>PBMC atlas</strong> as signature markers. The original clusters in this
+dataset were annotated using an integrated analysis combining RNA and
+protein data, ensuring the <strong>RNA-based gene lists accurately represent
+specific cell types</strong>. We focused on the broadest annotation level for
+clearer visualization and easier cross-dataset comparison. <strong>We omitted
+the ‘other T’</strong> label from our analysis, as it includes cell types not
+present in the PBMC3K dataset, making validation impossible. The
+<strong>‘other’</strong> cluster, predominantly platelets, <strong>was relabeled as
+‘Platelet’</strong> for clarity.</p>
+<p>N.B. - DEGs have been filtered to create concise and targeted gene
+lists: a log2 fold change greater than 1.5, a minimum average expression
+level of 0.25, a z-score above 5, and expression in at least 40% of the
+cells within each cluster.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># to load the gene signatures</span>
+<span class="n">gmt</span><span class="o">=</span><span class="n">investigate</span><span class="o">.</span><span class="n">load_signatures</span><span class="p">(</span><span class="s1">&#39;https://raw.githubusercontent.com/ingmbioinfo/cia/master/tutorial/data/atlas.gmt&#39;</span><span class="p">)</span>
+<span class="c1">#load_signatures can load both dictionaries or gmt files by providing both file_paths or URLs</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">gmt</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="s1">&#39;: &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">gmt</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span><span class="o">+</span><span class="s1">&#39; genes&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">B</span><span class="p">:</span> <span class="mi">115</span> <span class="n">genes</span>
+<span class="n">CD4</span> <span class="n">T</span><span class="p">:</span> <span class="mi">43</span> <span class="n">genes</span>
+<span class="n">CD8</span> <span class="n">T</span><span class="p">:</span> <span class="mi">22</span> <span class="n">genes</span>
+<span class="n">DC</span><span class="p">:</span> <span class="mi">156</span> <span class="n">genes</span>
+<span class="n">Mono</span><span class="p">:</span> <span class="mi">674</span> <span class="n">genes</span>
+<span class="n">NK</span><span class="p">:</span> <span class="mi">130</span> <span class="n">genes</span>
+<span class="n">Platelet</span><span class="p">:</span> <span class="mi">132</span> <span class="n">genes</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># to check gene lists similarity (Jaccard Index)</span>
+<span class="n">utils</span><span class="o">.</span><span class="n">signatures_similarity</span><span class="p">(</span><span class="n">gmt</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="s1">&#39;J&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>B</th>
+      <th>CD4 T</th>
+      <th>CD8 T</th>
+      <th>DC</th>
+      <th>Mono</th>
+      <th>NK</th>
+      <th>Platelet</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>B</th>
+      <td>1.000000</td>
+      <td>0.006369</td>
+      <td>0.000000</td>
+      <td>0.097166</td>
+      <td>0.019380</td>
+      <td>0.004098</td>
+      <td>0.008163</td>
+    </tr>
+    <tr>
+      <th>CD4 T</th>
+      <td>0.006369</td>
+      <td>1.000000</td>
+      <td>0.203704</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>CD8 T</th>
+      <td>0.000000</td>
+      <td>0.203704</td>
+      <td>1.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.034014</td>
+      <td>0.006536</td>
+    </tr>
+    <tr>
+      <th>DC</th>
+      <td>0.097166</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>1.000000</td>
+      <td>0.080729</td>
+      <td>0.007042</td>
+      <td>0.014085</td>
+    </tr>
+    <tr>
+      <th>Mono</th>
+      <td>0.019380</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.080729</td>
+      <td>1.000000</td>
+      <td>0.005000</td>
+      <td>0.028061</td>
+    </tr>
+    <tr>
+      <th>NK</th>
+      <td>0.004098</td>
+      <td>0.000000</td>
+      <td>0.034014</td>
+      <td>0.007042</td>
+      <td>0.005000</td>
+      <td>1.000000</td>
+      <td>0.023438</td>
+    </tr>
+    <tr>
+      <th>Platelet</th>
+      <td>0.008163</td>
+      <td>0.000000</td>
+      <td>0.006536</td>
+      <td>0.014085</td>
+      <td>0.028061</td>
+      <td>0.023438</td>
+      <td>1.000000</td>
+    </tr>
+  </tbody>
+</table>
+</div></section>
+<section id="anndata">
+<h3>AnnData<a class="headerlink" href="#anndata" title="Link to this heading"></a></h3>
+<p>In order <strong>to evaluate both the consistency</strong> of our method <strong>and the
+performances of classification</strong>, <strong>we used</strong> the PMBC atlas <strong>DEGs to
+automatically annotate</strong> the
+<a class="reference external" href="https://scanpy.readthedocs.io/en/stable/generated/scanpy.datasets.pbmc3k.html">PBMC3K</a>
+dataset from <em>Satija et al., 2015</em>
+<a class="reference external" href="https://www.nature.com/articles/nbt.3192">[2]</a>. This dataset was
+annotated by the authors relying on clustering and marker genes
+expression inspection and it is widely used as reference in the
+scientific community. <strong>We classified</strong> this dataset <strong>independently
+from the already present annotation</strong>, whose <strong>cell labels were used as
+ground truth</strong> to evaluate our classification perfomances with different
+modalities.</p>
+<p>With the intent of standardize the analysis, <strong>we strongly suggest</strong> to
+use AnnData objects preprocessed following those <a class="reference external" href="https://scanpy-tutorials.readthedocs.io/en/latest/pbmc3k.html">Scanpy
+tutorial</a>
+steps:</p>
+<ul class="simple">
+<li><p><strong>standard filtering</strong> on cells and genes.</p></li>
+<li><p>setting <strong>normalized and logarithmized raw gene expression</strong> values
+as .raw attribute.</p></li>
+</ul>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># to load the test dataset</span>
+<span class="n">pbmc3k</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;data/pbmc3k.h5ad&#39;</span><span class="p">)</span>
+
+<span class="c1"># to normalize and logarithmize the values</span>
+<span class="n">sc</span><span class="o">.</span><span class="n">pp</span><span class="o">.</span><span class="n">normalize_total</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">target_sum</span><span class="o">=</span><span class="mf">1e4</span><span class="p">)</span>
+<span class="n">sc</span><span class="o">.</span><span class="n">pp</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">)</span>
+
+<span class="c1"># to set the .raw attribute</span>
+<span class="n">pbmc3k</span><span class="o">.</span><span class="n">raw</span><span class="o">=</span><span class="n">pbmc3k</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pbmc3k</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s1">&#39;Cell type_colors&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;#b2df8a&#39;</span><span class="p">,</span> <span class="s1">&#39;#fb9a99&#39;</span><span class="p">,</span> <span class="s1">&#39;#1f78b4&#39;</span><span class="p">,</span> <span class="s1">&#39;#E4D00A&#39;</span><span class="p">,</span> <span class="s1">&#39;#6fadfd&#39;</span><span class="p">,</span> <span class="s1">&#39;#d62728&#39;</span><span class="p">,</span><span class="s1">&#39;#FF5733&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>For the classification of the test dataset <strong>we renamed and merged some
+clusters</strong> in order to make easier the comparison and the visualization
+of results. In particular, ‘CD14+ Monocytes’ and ‘FCGR3A+ Monocytes’
+clusters were merged into ‘Mono’.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sc</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">umap</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;louvain&#39;</span><span class="p">,</span><span class="s1">&#39;Cell type&#39;</span><span class="p">],</span> <span class="n">wspace</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ferrari</span><span class="o">/</span><span class="n">miniconda414</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">cia</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.10</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">scanpy</span><span class="o">/</span><span class="n">plotting</span><span class="o">/</span><span class="n">_tools</span><span class="o">/</span><span class="n">scatterplots</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">392</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">No</span> <span class="n">data</span> <span class="k">for</span> <span class="n">colormapping</span> <span class="n">provided</span> <span class="n">via</span> <span class="s1">&#39;c&#39;</span><span class="o">.</span> <span class="n">Parameters</span> <span class="s1">&#39;cmap&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">ignored</span>
+  <span class="n">cax</span> <span class="o">=</span> <span class="n">scatter</span><span class="p">(</span>
+<span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ferrari</span><span class="o">/</span><span class="n">miniconda414</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">cia</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.10</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">scanpy</span><span class="o">/</span><span class="n">plotting</span><span class="o">/</span><span class="n">_tools</span><span class="o">/</span><span class="n">scatterplots</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">392</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">No</span> <span class="n">data</span> <span class="k">for</span> <span class="n">colormapping</span> <span class="n">provided</span> <span class="n">via</span> <span class="s1">&#39;c&#39;</span><span class="o">.</span> <span class="n">Parameters</span> <span class="s1">&#39;cmap&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">ignored</span>
+  <span class="n">cax</span> <span class="o">=</span> <span class="n">scatter</span><span class="p">(</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_21_1.png" src="../../_images/output_21_1.png" />
+</section>
+</section>
+<section id="signature-score">
+<h2>Signature score<a class="headerlink" href="#signature-score" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">compute_signature_scores</span></code> function is <strong>based on the “gene
+signature score”</strong> calculation method presented in <em>Della Chiara,
+Gervasoni, Fakiola, Godano et al., 2021</em>
+<a class="reference external" href="https://www.nature.com/articles/s41467-021-22544-y">[3]</a>. The “gene
+signature score” of a signature <strong>S</strong> in a cell <strong>C</strong> is defined as
+follows:</p>
+<div class="math notranslate nohighlight">
+\[{\bf{GSS(C)}}=\frac{n}{L}\frac{\sum_{i=1}^n {\bf{X}}_i\: for\: {\bf{G}}_i \in S}{\sum_{j=1}^m {\bf{X}}_j\: for\: {\bf{G}}_j \in G}\]</div>
+<p>Where: - <strong>n</strong> is the number of genes in <strong>S</strong> that are expressed in
+<strong>C</strong>; - <strong>G</strong> = {𝐺₁, 𝐺₂, …, 𝐺ₘ} is the list of length <strong>m</strong> that
+contains all the gene symbols of cell <strong>C</strong>; - <strong>S</strong> = {𝐺₁, 𝐺₂, …, 𝐺ₗ}
+is the list of gene symbols of length <strong>L</strong> that compose the signature;
+- <strong>X</strong> = {𝑋₁, 𝑋₂, …, 𝑋ₘ} is the vector of gene expression values for
+genes in list <strong>G</strong>.</p>
+<p>With this score it is possible to <strong>condensate in a single value both
+the proportion of expressed signature genes and their overall
+expression</strong>, enabling researchers to easily study whole signatures
+expression at single cell level.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">investigate</span><span class="o">.</span><span class="n">compute_signature_scores</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">geneset</span><span class="o">=</span><span class="n">gmt</span><span class="p">[</span><span class="s1">&#39;B&#39;</span><span class="p">])</span>
+<span class="c1"># compute the signature scores of B cells gene signature for each cell</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">array</span><span class="p">([</span><span class="mf">0.16288456</span><span class="p">,</span> <span class="mf">2.0365728</span> <span class="p">,</span> <span class="mf">0.05562652</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="mf">2.26067215</span><span class="p">,</span> <span class="mf">1.52375561</span><span class="p">,</span>
+       <span class="mf">0.13641831</span><span class="p">])</span>
+</pre></div>
+</div>
+<section id="default-score">
+<h3>Default score<a class="headerlink" href="#default-score" title="Link to this heading"></a></h3>
+<p>To compute the signature scores of each signature in parallel, we
+implemented the <code class="docutils literal notranslate"><span class="pre">signature_scores</span></code> function. The function calls
+<code class="docutils literal notranslate"><span class="pre">load_signatures</span></code>, allowing it to support both <strong>signature
+dictionaries</strong> and canonical <strong>gmt files</strong> (tab separated and without
+header), which can be provided as either a <strong>filepath</strong> or a <strong>URL</strong>.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">investigate</span><span class="o">.</span><span class="n">signature_score</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">pbmc3k</span><span class="p">,</span><span class="n">signatures_input</span><span class="o">=</span><span class="n">gmt</span><span class="p">,</span> <span class="n">score_mode</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">,</span> <span class="n">return_df</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">n_cpus</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+<span class="c1"># &quot;raw&quot; is the default score mode, the one indicated as GSS in the formula.</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Checking</span> <span class="k">if</span> <span class="n">genes</span> <span class="n">are</span> <span class="ow">in</span> <span class="n">AnnData</span><span class="o">.</span><span class="n">var_names</span><span class="o">...</span>
+
+<span class="n">B</span><span class="p">:</span> <span class="mi">101</span><span class="o">/</span><span class="mi">115</span>
+<span class="n">CD4</span> <span class="n">T</span><span class="p">:</span> <span class="mi">40</span><span class="o">/</span><span class="mi">43</span>
+<span class="n">CD8</span> <span class="n">T</span><span class="p">:</span> <span class="mi">20</span><span class="o">/</span><span class="mi">22</span>
+<span class="n">DC</span><span class="p">:</span> <span class="mi">151</span><span class="o">/</span><span class="mi">156</span>
+<span class="n">Mono</span><span class="p">:</span> <span class="mi">649</span><span class="o">/</span><span class="mi">674</span>
+<span class="n">NK</span><span class="p">:</span> <span class="mi">126</span><span class="o">/</span><span class="mi">130</span>
+<span class="n">Platelet</span><span class="p">:</span> <span class="mi">123</span><span class="o">/</span><span class="mi">132</span>
+</pre></div>
+</div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>CD4 T</th>
+      <th>CD8 T</th>
+      <th>NK</th>
+      <th>DC</th>
+      <th>B</th>
+      <th>Mono</th>
+      <th>Platelet</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.212984</td>
+      <td>0.133218</td>
+      <td>0.795511</td>
+      <td>0.101871</td>
+      <td>0.162885</td>
+      <td>3.586129</td>
+      <td>0.289832</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.040765</td>
+      <td>0.009784</td>
+      <td>0.446058</td>
+      <td>0.989410</td>
+      <td>2.036573</td>
+      <td>9.018179</td>
+      <td>0.728088</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0.423940</td>
+      <td>0.058274</td>
+      <td>0.447281</td>
+      <td>0.093946</td>
+      <td>0.055627</td>
+      <td>5.277054</td>
+      <td>0.555545</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.003293</td>
+      <td>0.003293</td>
+      <td>0.397583</td>
+      <td>0.960809</td>
+      <td>0.304273</td>
+      <td>28.666899</td>
+      <td>0.743924</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.015666</td>
+      <td>0.064994</td>
+      <td>3.622756</td>
+      <td>0.312366</td>
+      <td>0.045849</td>
+      <td>1.749117</td>
+      <td>0.305545</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>2633</th>
+      <td>0.002645</td>
+      <td>0.002645</td>
+      <td>0.387395</td>
+      <td>2.359434</td>
+      <td>0.455459</td>
+      <td>38.973505</td>
+      <td>0.676382</td>
+    </tr>
+    <tr>
+      <th>2634</th>
+      <td>0.072970</td>
+      <td>0.000635</td>
+      <td>0.282399</td>
+      <td>0.449517</td>
+      <td>0.677553</td>
+      <td>6.725752</td>
+      <td>0.539720</td>
+    </tr>
+    <tr>
+      <th>2635</th>
+      <td>0.026156</td>
+      <td>0.000000</td>
+      <td>0.092876</td>
+      <td>0.937729</td>
+      <td>2.260672</td>
+      <td>4.705452</td>
+      <td>0.150290</td>
+    </tr>
+    <tr>
+      <th>2636</th>
+      <td>0.001920</td>
+      <td>0.000000</td>
+      <td>0.238040</td>
+      <td>0.608006</td>
+      <td>1.523756</td>
+      <td>3.352826</td>
+      <td>0.135530</td>
+    </tr>
+    <tr>
+      <th>2637</th>
+      <td>0.350350</td>
+      <td>0.066447</td>
+      <td>0.131050</td>
+      <td>0.117211</td>
+      <td>0.136418</td>
+      <td>2.486923</td>
+      <td>0.693216</td>
+    </tr>
+  </tbody>
+</table>
+<p>2638 rows × 7 columns</p>
+</div><p><strong>Signature scores are stored by default in AnnData.obs</strong>, adding a
+column for each signature, named accordingly to the signature name. With
+return_df=True a dataframe is also returned.</p>
+</section>
+<section id="scaled-score">
+<h3>Scaled score<a class="headerlink" href="#scaled-score" title="Link to this heading"></a></h3>
+<p>The scaled score is the <strong>GSS divided by the maximum score value</strong>, an
+operation that rescales the values from 0 to 1. This allows scaled
+scores of <strong>different signatures</strong>, even with <strong>varying lengths</strong>, to be
+<strong>directly compared</strong>. To compute the ‘scaled’ score, score_mode must be
+set to ‘scaled’.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">investigate</span><span class="o">.</span><span class="n">signature_score</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">signatures_input</span><span class="o">=</span><span class="n">gmt</span><span class="p">,</span> <span class="n">score_mode</span><span class="o">=</span><span class="s1">&#39;scaled&#39;</span><span class="p">,</span> <span class="n">n_cpus</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Checking</span> <span class="k">if</span> <span class="n">genes</span> <span class="n">are</span> <span class="ow">in</span> <span class="n">AnnData</span><span class="o">.</span><span class="n">var_names</span><span class="o">...</span>
+
+<span class="n">B</span><span class="p">:</span> <span class="mi">101</span><span class="o">/</span><span class="mi">115</span>
+<span class="n">CD4</span> <span class="n">T</span><span class="p">:</span> <span class="mi">40</span><span class="o">/</span><span class="mi">43</span>
+<span class="n">CD8</span> <span class="n">T</span><span class="p">:</span> <span class="mi">20</span><span class="o">/</span><span class="mi">22</span>
+<span class="n">DC</span><span class="p">:</span> <span class="mi">151</span><span class="o">/</span><span class="mi">156</span>
+<span class="n">Mono</span><span class="p">:</span> <span class="mi">649</span><span class="o">/</span><span class="mi">674</span>
+<span class="n">NK</span><span class="p">:</span> <span class="mi">126</span><span class="o">/</span><span class="mi">130</span>
+<span class="n">Platelet</span><span class="p">:</span> <span class="mi">123</span><span class="o">/</span><span class="mi">132</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sc</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">umap</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;Cell type&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ferrari</span><span class="o">/</span><span class="n">miniconda414</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">cia</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.10</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">scanpy</span><span class="o">/</span><span class="n">plotting</span><span class="o">/</span><span class="n">_tools</span><span class="o">/</span><span class="n">scatterplots</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">392</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">No</span> <span class="n">data</span> <span class="k">for</span> <span class="n">colormapping</span> <span class="n">provided</span> <span class="n">via</span> <span class="s1">&#39;c&#39;</span><span class="o">.</span> <span class="n">Parameters</span> <span class="s1">&#39;cmap&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">ignored</span>
+  <span class="n">cax</span> <span class="o">=</span> <span class="n">scatter</span><span class="p">(</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_33_1.png" src="../../_images/output_33_1.png" />
+<p>By inspecting the score values, for all the signatures, <strong>the highest
+values are found in the proper cluster</strong>, indicating the sensitivity of
+the signatures and the capability of the signature score to represent
+the expression of the whole gene lists.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sc</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">umap</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">gmt</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">color_map</span><span class="o">=</span><span class="s1">&#39;Reds&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_35_0.png" src="../../_images/output_35_0.png" />
+<p>To better viusualize those distributions, we exploited
+<code class="docutils literal notranslate"><span class="pre">grouped_distributions</span></code>. By selecting AnnData.obs columns containing
+<strong>signature scores</strong>, this function plots <strong>a heatmap showing the
+medians of their values in cell groups</strong> and it prints <strong>a statistical
+report</strong>. <strong>For each cell group</strong>, a two-sided <strong>Wilcoxon test</strong> is
+perfomed to evaluate if the distribution with the highest median is
+different from the others. <strong>For each signature</strong>, a two-sided
+<strong>Mann-Whitney U test</strong> is performed to evaluate if the distribution in
+the cell group having the highest median is different from the other
+groups distributions.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">report</span><span class="o">.</span><span class="n">grouped_distributions</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">groups_obs</span><span class="o">=</span><span class="s1">&#39;Cell type&#39;</span><span class="p">,</span> <span class="n">columns_obs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CD4 T&#39;</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">,</span> <span class="s1">&#39;CD8 T&#39;</span><span class="p">,</span> <span class="s1">&#39;NK&#39;</span><span class="p">,</span> <span class="s1">&#39;Mono&#39;</span><span class="p">,</span> <span class="s1">&#39;DC&#39;</span><span class="p">,</span> <span class="s1">&#39;Platelet&#39;</span><span class="p">],</span>
+                             <span class="n">scale_medians</span><span class="o">=</span><span class="s1">&#39;column-wise&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Reds&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ferrari</span><span class="o">/</span><span class="n">dev_cia</span><span class="o">/</span><span class="n">cia</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">cia</span><span class="o">/</span><span class="n">report</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">87</span><span class="p">:</span> <span class="ne">FutureWarning</span><span class="p">:</span> <span class="n">The</span> <span class="n">default</span> <span class="n">value</span> <span class="n">of</span> <span class="n">numeric_only</span> <span class="ow">in</span> <span class="n">DataFrameGroupBy</span><span class="o">.</span><span class="n">median</span> <span class="ow">is</span> <span class="n">deprecated</span><span class="o">.</span> <span class="n">In</span> <span class="n">a</span> <span class="n">future</span> <span class="n">version</span><span class="p">,</span> <span class="n">numeric_only</span> <span class="n">will</span> <span class="n">default</span> <span class="n">to</span> <span class="kc">False</span><span class="o">.</span> <span class="n">Either</span> <span class="n">specify</span> <span class="n">numeric_only</span> <span class="ow">or</span> <span class="n">select</span> <span class="n">only</span> <span class="n">columns</span> <span class="n">which</span> <span class="n">should</span> <span class="n">be</span> <span class="n">valid</span> <span class="k">for</span> <span class="n">the</span> <span class="n">function</span><span class="o">.</span>
+  <span class="n">grouped_df</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">groups_obs</span><span class="p">)</span><span class="o">.</span><span class="n">median</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Performing</span> <span class="n">Wilcoxon</span> <span class="n">test</span> <span class="n">on</span> <span class="n">each</span> <span class="n">cell</span> <span class="n">group</span> <span class="o">...</span>
+<span class="n">WARNING</span> <span class="ow">in</span> <span class="n">cell</span> <span class="n">group</span> <span class="n">DC</span><span class="p">:</span> <span class="n">DC</span> <span class="n">values</span> <span class="n">are</span> <span class="ow">not</span> <span class="n">significantly</span> <span class="n">different</span> <span class="kn">from</span> <span class="nn">Mono</span> <span class="n">values</span><span class="o">.</span>
+
+<span class="n">Performing</span> <span class="n">Mann</span><span class="o">-</span><span class="n">Whitney</span> <span class="n">U</span> <span class="n">test</span> <span class="n">on</span> <span class="n">each</span> <span class="n">selected</span> <span class="n">AnnData</span><span class="o">.</span><span class="n">obs</span> <span class="n">column</span> <span class="o">...</span>
+<span class="n">For</span> <span class="n">each</span> <span class="n">distribution</span><span class="p">,</span> <span class="n">there</span> <span class="ow">is</span> <span class="n">only</span> <span class="n">a</span> <span class="n">cell</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">which</span> <span class="n">values</span> <span class="n">are</span> <span class="n">higher</span> <span class="k">with</span> <span class="n">respect</span> <span class="n">to</span> <span class="nb">all</span> <span class="n">the</span> <span class="n">other</span> <span class="n">groups</span>  <span class="p">(</span><span class="n">p</span><span class="o">&lt;</span><span class="mf">0.01</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">Axes</span><span class="p">:</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Cell type&#39;</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_37_3.png" src="../../_images/output_37_3.png" />
+<p>The statistical tests confirmed that the <strong>visible differences in
+signature score distributions are significant</strong>, indicating that scaled
+signature scores are consistent with authors annotation. With the
+evidence of the goodness of the signatures, we proceeded with the
+classification of PBMC3K.</p>
+</section>
+</section>
+<section id="signature-based-classification">
+<h2>Signature-based classification<a class="headerlink" href="#signature-based-classification" title="Link to this heading"></a></h2>
+<p>To classify the PBMC3K dataset we used
+<code class="docutils literal notranslate"><span class="pre">signature_based_classification</span></code>, which directly computes and compares
+scaled scores of each signature in each single cell of the dataset</p>
+<section id="default-classification">
+<h3>Default classification<a class="headerlink" href="#default-classification" title="Link to this heading"></a></h3>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+<span class="n">investigate</span><span class="o">.</span><span class="n">signature_based_classification</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">signatures_input</span><span class="o">=</span><span class="n">gmt</span><span class="p">,</span> <span class="n">similarity_threshold</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                           <span class="n">label_column</span><span class="o">=</span><span class="s1">&#39;CIA prediction default&#39;</span><span class="p">,</span> <span class="n">n_cpus</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Checking if genes are in AnnData.var_names...
+
+B: 101/115
+CD4 T: 40/43
+CD8 T: 20/22
+DC: 151/156
+Mono: 649/674
+NK: 126/130
+Platelet: 123/132
+
+Classification complete! Start time: 09:25:51, End time: 09:25:51, Results stored in AnnData.obs[&quot;CIA prediction default&quot;]
+CPU times: user 496 ms, sys: 10.6 ms, total: 507 ms
+Wall time: 352 ms
+</pre></div>
+</div>
+<p>Classification is performed by <strong>assigning to each cell the label of the
+signature that has the maximum scaled score value</strong>. Because it is based
+on matrix and vector operations, and given the possibility to
+parallelize the computation, this process is <strong>very fast</strong>.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pbmc3k</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s1">&#39;CIA prediction default_colors&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;#fb9a99&#39;</span><span class="p">,</span> <span class="s1">&#39;#b2df8a&#39;</span><span class="p">,</span> <span class="s1">&#39;#1f78b4&#39;</span><span class="p">,</span> <span class="s1">&#39;#d62728&#39;</span><span class="p">,</span> <span class="s1">&#39;#6fadfd&#39;</span><span class="p">,</span> <span class="s1">&#39;#E4D00A&#39;</span><span class="p">,</span><span class="s1">&#39;#FF5733&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sc</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">umap</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Cell type&#39;</span><span class="p">,</span><span class="s1">&#39;CIA prediction default&#39;</span><span class="p">],</span> <span class="n">wspace</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ferrari</span><span class="o">/</span><span class="n">miniconda414</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">cia</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.10</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">scanpy</span><span class="o">/</span><span class="n">plotting</span><span class="o">/</span><span class="n">_tools</span><span class="o">/</span><span class="n">scatterplots</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">392</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">No</span> <span class="n">data</span> <span class="k">for</span> <span class="n">colormapping</span> <span class="n">provided</span> <span class="n">via</span> <span class="s1">&#39;c&#39;</span><span class="o">.</span> <span class="n">Parameters</span> <span class="s1">&#39;cmap&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">ignored</span>
+  <span class="n">cax</span> <span class="o">=</span> <span class="n">scatter</span><span class="p">(</span>
+<span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ferrari</span><span class="o">/</span><span class="n">miniconda414</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">cia</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.10</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">scanpy</span><span class="o">/</span><span class="n">plotting</span><span class="o">/</span><span class="n">_tools</span><span class="o">/</span><span class="n">scatterplots</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">392</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">No</span> <span class="n">data</span> <span class="k">for</span> <span class="n">colormapping</span> <span class="n">provided</span> <span class="n">via</span> <span class="s1">&#39;c&#39;</span><span class="o">.</span> <span class="n">Parameters</span> <span class="s1">&#39;cmap&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">ignored</span>
+  <span class="n">cax</span> <span class="o">=</span> <span class="n">scatter</span><span class="p">(</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_45_1.png" src="../../_images/output_45_1.png" />
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">report</span><span class="o">.</span><span class="n">group_composition</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">classification_obs</span><span class="o">=</span><span class="s1">&#39;CIA prediction default&#39;</span><span class="p">,</span> <span class="n">groups_obs</span><span class="o">=</span><span class="s1">&#39;Cell type&#39;</span><span class="p">,</span>
+                  <span class="n">columns_order</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CD4 T&#39;</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">,</span> <span class="s1">&#39;CD8 T&#39;</span><span class="p">,</span> <span class="s1">&#39;NK&#39;</span><span class="p">,</span> <span class="s1">&#39;Mono&#39;</span><span class="p">,</span> <span class="s1">&#39;DC&#39;</span><span class="p">,</span> <span class="s1">&#39;Platelet&#39;</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Greens&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">Axes</span><span class="p">:</span> <span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;CIA prediction default&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Cell type&#39;</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_46_1.png" src="../../_images/output_46_1.png" />
+<p>The confusion matrix reveals that the classification method is highly
+effective, with most cells being correctly labeled according to their
+true cell types. The errors that did occur are relatively few and can be
+summarized as follows:</p>
+<ul class="simple">
+<li><p><strong>CD4 T cells:</strong> Predominantly classified correctly, with a small
+number misclassified as CD8 T cells.</p></li>
+<li><p><strong>CD8 T cells:</strong> Mostly identified accurately, but with some
+confusion with NK cells noted.</p></li>
+<li><p><strong>Dendritic cells:</strong> Generally well-classified, although there is a
+tendency for some cells to be mislabeled as monocytes.</p></li>
+</ul>
+</section>
+<section id="classification-with-similarity-threshold">
+<h3>Classification with similarity threshold<a class="headerlink" href="#classification-with-similarity-threshold" title="Link to this heading"></a></h3>
+<p>The similarity threshold is a critical parameter in the classification
+process, utilized within the <code class="docutils literal notranslate"><span class="pre">signature_based_classification</span></code>
+function. It sets <strong>the minimum required difference between the highest
+and second-highest signature scores</strong> for a cell to be confidently
+classified into a specific category. This threshold <strong>prevents ambiguous
+classifications</strong> and ensures that cells are distinctly assigned to the
+most appropriate categories based on their signature expression levels.</p>
+<p>Cells whose signature scores do not meet this threshold are labeled as
+<strong>‘Unassignned’</strong>. This label indicates that these cells do not exhibit
+a strong correlation with any of the predefined signatures, thus
+avoiding misclassification.</p>
+<p>Here we test 3 tresholds: 5%, 10% and 15%.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">]:</span>
+    <span class="n">investigate</span><span class="o">.</span><span class="n">signature_based_classification</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">signatures_input</span><span class="o">=</span><span class="n">gmt</span><span class="p">,</span> <span class="n">similarity_threshold</span><span class="o">=</span><span class="n">t</span><span class="p">,</span>
+                                           <span class="n">label_column</span><span class="o">=</span><span class="s1">&#39;CIA prediction t=&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">n_cpus</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Checking if genes are in AnnData.var_names...
+
+B: 101/115
+CD4 T: 40/43
+CD8 T: 20/22
+DC: 151/156
+Mono: 649/674
+NK: 126/130
+Platelet: 123/132
+
+Classification complete! Start time: 09:25:52, End time: 09:25:52, Results stored in AnnData.obs[&quot;CIA prediction t=0.05&quot;]
+Checking if genes are in AnnData.var_names...
+
+B: 101/115
+CD4 T: 40/43
+CD8 T: 20/22
+DC: 151/156
+Mono: 649/674
+NK: 126/130
+Platelet: 123/132
+
+Classification complete! Start time: 09:25:52, End time: 09:25:53, Results stored in AnnData.obs[&quot;CIA prediction t=0.1&quot;]
+Checking if genes are in AnnData.var_names...
+
+B: 101/115
+CD4 T: 40/43
+CD8 T: 20/22
+DC: 151/156
+Mono: 649/674
+NK: 126/130
+Platelet: 123/132
+
+Classification complete! Start time: 09:25:53, End time: 09:25:53, Results stored in AnnData.obs[&quot;CIA prediction t=0.15&quot;]
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pbmc3k</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s1">&#39;CIA prediction t=0.05_colors&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;#fb9a99&#39;</span><span class="p">,</span> <span class="s1">&#39;#b2df8a&#39;</span><span class="p">,</span> <span class="s1">&#39;#1f78b4&#39;</span><span class="p">,</span> <span class="s1">&#39;#d62728&#39;</span><span class="p">,</span> <span class="s1">&#39;#6fadfd&#39;</span><span class="p">,</span> <span class="s1">&#39;#E4D00A&#39;</span><span class="p">,</span><span class="s1">&#39;#FF5733&#39;</span><span class="p">,</span><span class="s1">&#39;#808080&#39;</span><span class="p">]</span>
+<span class="n">pbmc3k</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s1">&#39;CIA prediction t=0.1_colors&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;#fb9a99&#39;</span><span class="p">,</span> <span class="s1">&#39;#b2df8a&#39;</span><span class="p">,</span> <span class="s1">&#39;#1f78b4&#39;</span><span class="p">,</span> <span class="s1">&#39;#d62728&#39;</span><span class="p">,</span> <span class="s1">&#39;#6fadfd&#39;</span><span class="p">,</span> <span class="s1">&#39;#E4D00A&#39;</span><span class="p">,</span><span class="s1">&#39;#FF5733&#39;</span><span class="p">,</span><span class="s1">&#39;#808080&#39;</span><span class="p">]</span>
+<span class="n">pbmc3k</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s1">&#39;CIA prediction t=0.15_colors&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;#fb9a99&#39;</span><span class="p">,</span> <span class="s1">&#39;#b2df8a&#39;</span><span class="p">,</span> <span class="s1">&#39;#1f78b4&#39;</span><span class="p">,</span> <span class="s1">&#39;#d62728&#39;</span><span class="p">,</span> <span class="s1">&#39;#6fadfd&#39;</span><span class="p">,</span> <span class="s1">&#39;#E4D00A&#39;</span><span class="p">,</span><span class="s1">&#39;#FF5733&#39;</span><span class="p">,</span><span class="s1">&#39;#808080&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sc</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">umap</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Cell type&#39;</span><span class="p">,</span><span class="s1">&#39;CIA prediction default&#39;</span><span class="p">],</span> <span class="n">wspace</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ferrari</span><span class="o">/</span><span class="n">miniconda414</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">cia</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.10</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">scanpy</span><span class="o">/</span><span class="n">plotting</span><span class="o">/</span><span class="n">_tools</span><span class="o">/</span><span class="n">scatterplots</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">392</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">No</span> <span class="n">data</span> <span class="k">for</span> <span class="n">colormapping</span> <span class="n">provided</span> <span class="n">via</span> <span class="s1">&#39;c&#39;</span><span class="o">.</span> <span class="n">Parameters</span> <span class="s1">&#39;cmap&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">ignored</span>
+  <span class="n">cax</span> <span class="o">=</span> <span class="n">scatter</span><span class="p">(</span>
+<span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ferrari</span><span class="o">/</span><span class="n">miniconda414</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">cia</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.10</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">scanpy</span><span class="o">/</span><span class="n">plotting</span><span class="o">/</span><span class="n">_tools</span><span class="o">/</span><span class="n">scatterplots</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">392</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">No</span> <span class="n">data</span> <span class="k">for</span> <span class="n">colormapping</span> <span class="n">provided</span> <span class="n">via</span> <span class="s1">&#39;c&#39;</span><span class="o">.</span> <span class="n">Parameters</span> <span class="s1">&#39;cmap&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">ignored</span>
+  <span class="n">cax</span> <span class="o">=</span> <span class="n">scatter</span><span class="p">(</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_53_1.png" src="../../_images/output_53_1.png" />
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sc</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">umap</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CIA prediction t=0.05&#39;</span><span class="p">,</span> <span class="s1">&#39;CIA prediction t=0.1&#39;</span><span class="p">,</span> <span class="s1">&#39;CIA prediction t=0.15&#39;</span><span class="p">],</span> <span class="n">wspace</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ferrari</span><span class="o">/</span><span class="n">miniconda414</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">cia</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.10</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">scanpy</span><span class="o">/</span><span class="n">plotting</span><span class="o">/</span><span class="n">_tools</span><span class="o">/</span><span class="n">scatterplots</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">392</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">No</span> <span class="n">data</span> <span class="k">for</span> <span class="n">colormapping</span> <span class="n">provided</span> <span class="n">via</span> <span class="s1">&#39;c&#39;</span><span class="o">.</span> <span class="n">Parameters</span> <span class="s1">&#39;cmap&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">ignored</span>
+  <span class="n">cax</span> <span class="o">=</span> <span class="n">scatter</span><span class="p">(</span>
+<span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ferrari</span><span class="o">/</span><span class="n">miniconda414</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">cia</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.10</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">scanpy</span><span class="o">/</span><span class="n">plotting</span><span class="o">/</span><span class="n">_tools</span><span class="o">/</span><span class="n">scatterplots</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">392</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">No</span> <span class="n">data</span> <span class="k">for</span> <span class="n">colormapping</span> <span class="n">provided</span> <span class="n">via</span> <span class="s1">&#39;c&#39;</span><span class="o">.</span> <span class="n">Parameters</span> <span class="s1">&#39;cmap&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">ignored</span>
+  <span class="n">cax</span> <span class="o">=</span> <span class="n">scatter</span><span class="p">(</span>
+<span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ferrari</span><span class="o">/</span><span class="n">miniconda414</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">cia</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.10</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">scanpy</span><span class="o">/</span><span class="n">plotting</span><span class="o">/</span><span class="n">_tools</span><span class="o">/</span><span class="n">scatterplots</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">392</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">No</span> <span class="n">data</span> <span class="k">for</span> <span class="n">colormapping</span> <span class="n">provided</span> <span class="n">via</span> <span class="s1">&#39;c&#39;</span><span class="o">.</span> <span class="n">Parameters</span> <span class="s1">&#39;cmap&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">ignored</span>
+  <span class="n">cax</span> <span class="o">=</span> <span class="n">scatter</span><span class="p">(</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_54_1.png" src="../../_images/output_54_1.png" />
+<p>Raising the similarity threshold in the classification algorithm indeed
+leads to a greater number of cells being labeled as <strong>“Unassigned”</strong>.
+This change typically affects <strong>cells that previously might have been
+incorrectly classified</strong>, particularly those within groups that exhibit
+closely related signature profiles. As the similarity threshold
+increases, the classifier becomes more conservative, requiring a higher
+degree of confidence before assigning a label. Consequently, <strong>cells
+that do not distinctly match a particular signature according to the
+stricter criteria are more likely to remain unclassified</strong>.</p>
+<p>To further show the importance of this threshold we removed a signature
+from the dictionary in order to simulate the situation in which a cell
+type of the dataset is not represented by the signatures.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">del</span> <span class="n">gmt</span><span class="p">[</span><span class="s1">&#39;B&#39;</span><span class="p">]</span> <span class="c1"># B cells signature as been removed</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]:</span>
+    <span class="n">investigate</span><span class="o">.</span><span class="n">signature_based_classification</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">signatures_input</span><span class="o">=</span><span class="n">gmt</span><span class="p">,</span> <span class="n">similarity_threshold</span><span class="o">=</span><span class="n">t</span><span class="p">,</span>
+                                           <span class="n">label_column</span><span class="o">=</span><span class="s1">&#39;CIA no B t=&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">n_cpus</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Checking if genes are in AnnData.var_names...
+
+CD4 T: 40/43
+CD8 T: 20/22
+DC: 151/156
+Mono: 649/674
+NK: 126/130
+Platelet: 123/132
+
+Classification complete! Start time: 09:25:54, End time: 09:25:54, Results stored in AnnData.obs[&quot;CIA no B t=0&quot;]
+Checking if genes are in AnnData.var_names...
+
+CD4 T: 40/43
+CD8 T: 20/22
+DC: 151/156
+Mono: 649/674
+NK: 126/130
+Platelet: 123/132
+
+Classification complete! Start time: 09:25:54, End time: 09:25:55, Results stored in AnnData.obs[&quot;CIA no B t=0.1&quot;]
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pbmc3k</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s1">&#39;CIA no B t=0_colors&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;#b2df8a&#39;</span><span class="p">,</span> <span class="s1">&#39;#1f78b4&#39;</span><span class="p">,</span> <span class="s1">&#39;#d62728&#39;</span><span class="p">,</span> <span class="s1">&#39;#6fadfd&#39;</span><span class="p">,</span> <span class="s1">&#39;#E4D00A&#39;</span><span class="p">,</span><span class="s1">&#39;#FF5733&#39;</span><span class="p">]</span>
+<span class="n">pbmc3k</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s1">&#39;CIA no B t=0.1_colors&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span> <span class="s1">&#39;#b2df8a&#39;</span><span class="p">,</span> <span class="s1">&#39;#1f78b4&#39;</span><span class="p">,</span> <span class="s1">&#39;#d62728&#39;</span><span class="p">,</span> <span class="s1">&#39;#6fadfd&#39;</span><span class="p">,</span> <span class="s1">&#39;#E4D00A&#39;</span><span class="p">,</span><span class="s1">&#39;#FF5733&#39;</span><span class="p">,</span><span class="s1">&#39;#808080&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sc</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">umap</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CIA no B t=0&#39;</span><span class="p">,</span> <span class="s1">&#39;CIA no B t=0.1&#39;</span><span class="p">],</span> <span class="n">wspace</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ferrari</span><span class="o">/</span><span class="n">miniconda414</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">cia</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.10</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">scanpy</span><span class="o">/</span><span class="n">plotting</span><span class="o">/</span><span class="n">_tools</span><span class="o">/</span><span class="n">scatterplots</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">392</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">No</span> <span class="n">data</span> <span class="k">for</span> <span class="n">colormapping</span> <span class="n">provided</span> <span class="n">via</span> <span class="s1">&#39;c&#39;</span><span class="o">.</span> <span class="n">Parameters</span> <span class="s1">&#39;cmap&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">ignored</span>
+  <span class="n">cax</span> <span class="o">=</span> <span class="n">scatter</span><span class="p">(</span>
+<span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ferrari</span><span class="o">/</span><span class="n">miniconda414</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">cia</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.10</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">scanpy</span><span class="o">/</span><span class="n">plotting</span><span class="o">/</span><span class="n">_tools</span><span class="o">/</span><span class="n">scatterplots</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">392</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">No</span> <span class="n">data</span> <span class="k">for</span> <span class="n">colormapping</span> <span class="n">provided</span> <span class="n">via</span> <span class="s1">&#39;c&#39;</span><span class="o">.</span> <span class="n">Parameters</span> <span class="s1">&#39;cmap&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">ignored</span>
+  <span class="n">cax</span> <span class="o">=</span> <span class="n">scatter</span><span class="p">(</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_60_1.png" src="../../_images/output_60_1.png" />
+<p>Indeed, applying a similarity threshold has proven to be a <strong>crucial
+step for enhancing the specificity and reliability of the classification
+results</strong>. It has effectively reduced the mislabeling of B cells as
+Dendritic Cells (DC), demonstrating its value in refining the accuracy
+of cell type predictions. Moreover, the threshold’s role in identifying
+‘Unassigned’ cells <strong>helps flag potential new or unexpected cell
+types</strong>, such as contaminants or previously unidentified cell
+populations, within the sample. This feature is especially beneficial
+for exploratory analyses where novel discoveries are a possibility.</p>
+</section>
+</section>
+<section id="classification-performance-evaluation">
+<h2>Classification performance evaluation<a class="headerlink" href="#classification-performance-evaluation" title="Link to this heading"></a></h2>
+<p>To evaluate classification performances both per ground truth cluster
+and overall we exploited respectively <code class="docutils literal notranslate"><span class="pre">grouped_classification_metrics</span></code>
+and <code class="docutils literal notranslate"><span class="pre">classification_metrics</span></code> functions.</p>
+<p>In both functions <strong>cell labels assigned by CIA and the annotation
+already present in test datasets are compared</strong> in order to count true
+positive (TP), true negative (TN), false positive (FP) and false
+negative (FN) cells for each cluster. Only for the overall calculation
+the per-cluster counts are summed to obtain the total TN, TP, FN and FP.</p>
+<p>Then, again for both functions, the following metrics are calculated: -
+<strong>Sensitivity</strong> (SE)= TP/(TP+FN) - <strong>Specificity</strong> (SP)= TN/(TN+FP) -
+<strong>Precision</strong> (PR)= TP/(TP+FP) - <strong>Accuracy</strong> (ACC)=
+(TN+TP)/(TN+TP+FN+FP) - <strong>F1-score</strong> (F1)= 2<em>TP/(2</em>TP+FN+FP)</p>
+<p>N.B.: the column of the classification of interest and the one with
+ground truth labels must have the same categories to be compared.</p>
+<p>Here, for clarity, we show only the <strong>per-cluster classification</strong>
+metrics of a single classification.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">report</span><span class="o">.</span><span class="n">grouped_classification_metrics</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">classification_obs</span><span class="o">=</span><span class="s1">&#39;CIA prediction default&#39;</span><span class="p">,</span><span class="n">groups_obs</span><span class="o">=</span><span class="s1">&#39;Cell type&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>SE</th>
+      <th>SP</th>
+      <th>PR</th>
+      <th>ACC</th>
+      <th>F1</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>CD4 T</th>
+      <td>0.881119</td>
+      <td>0.975904</td>
+      <td>0.965517</td>
+      <td>0.934799</td>
+      <td>0.921389</td>
+    </tr>
+    <tr>
+      <th>B</th>
+      <td>0.994152</td>
+      <td>0.998258</td>
+      <td>0.988372</td>
+      <td>0.997726</td>
+      <td>0.991254</td>
+    </tr>
+    <tr>
+      <th>CD8 T</th>
+      <td>0.813291</td>
+      <td>0.943583</td>
+      <td>0.662371</td>
+      <td>0.927976</td>
+      <td>0.730114</td>
+    </tr>
+    <tr>
+      <th>NK</th>
+      <td>0.941558</td>
+      <td>0.989936</td>
+      <td>0.852941</td>
+      <td>0.987111</td>
+      <td>0.895062</td>
+    </tr>
+    <tr>
+      <th>Mono</th>
+      <td>0.998413</td>
+      <td>0.988546</td>
+      <td>0.964724</td>
+      <td>0.990902</td>
+      <td>0.981279</td>
+    </tr>
+    <tr>
+      <th>DC</th>
+      <td>0.675676</td>
+      <td>0.998847</td>
+      <td>0.892857</td>
+      <td>0.994314</td>
+      <td>0.769231</td>
+    </tr>
+    <tr>
+      <th>Platelet</th>
+      <td>0.800000</td>
+      <td>1.000000</td>
+      <td>1.000000</td>
+      <td>0.998863</td>
+      <td>0.888889</td>
+    </tr>
+  </tbody>
+</table>
+</div><p>And here are reported the <strong>overall perfomances of each classification
+modality</strong>:</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">report</span><span class="o">.</span><span class="n">classification_metrics</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span>
+                       <span class="n">classification_obs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CIA prediction default&#39;</span><span class="p">,</span> <span class="s1">&#39;CIA prediction t=0.05&#39;</span><span class="p">,</span> <span class="s1">&#39;CIA prediction t=0.1&#39;</span><span class="p">,</span>
+                                           <span class="s1">&#39;CIA prediction t=0.15&#39;</span><span class="p">,</span><span class="s1">&#39;CIA no B t=0&#39;</span><span class="p">,</span> <span class="s1">&#39;CIA no B t=0.1&#39;</span><span class="p">],</span> <span class="n">groups_obs</span><span class="o">=</span><span class="s1">&#39;Cell type&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>SE</th>
+      <th>SP</th>
+      <th>PR</th>
+      <th>ACC</th>
+      <th>F1</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>CIA prediction default</th>
+      <td>0.915845</td>
+      <td>0.985974</td>
+      <td>0.915845</td>
+      <td>0.975956</td>
+      <td>0.915845</td>
+    </tr>
+    <tr>
+      <th>CIA prediction t=0.05</th>
+      <td>0.871114</td>
+      <td>0.990081</td>
+      <td>0.936049</td>
+      <td>0.973086</td>
+      <td>0.902415</td>
+    </tr>
+    <tr>
+      <th>CIA prediction t=0.1</th>
+      <td>0.803260</td>
+      <td>0.993240</td>
+      <td>0.951932</td>
+      <td>0.966100</td>
+      <td>0.871299</td>
+    </tr>
+    <tr>
+      <th>CIA prediction t=0.15</th>
+      <td>0.736164</td>
+      <td>0.994946</td>
+      <td>0.960435</td>
+      <td>0.957977</td>
+      <td>0.833476</td>
+    </tr>
+    <tr>
+      <th>CIA no B t=0</th>
+      <td>0.787339</td>
+      <td>0.964556</td>
+      <td>0.787339</td>
+      <td>0.939240</td>
+      <td>0.787339</td>
+    </tr>
+    <tr>
+      <th>CIA no B t=0.1</th>
+      <td>0.678923</td>
+      <td>0.991218</td>
+      <td>0.927979</td>
+      <td>0.946605</td>
+      <td>0.784151</td>
+    </tr>
+  </tbody>
+</table>
+</div><p>As the similarity threshold is raised, <strong>overall classification
+performance may decrease due to an increase in the number of
+‘Unassigned’ cells</strong>, which are counted as misclassified. However, <strong>by
+setting the unassigned_label, we can exclude ‘Unassigned’ cells from
+performance metrics calculations</strong>, thereby refining our analysis.
+Consequently, a new column indicating the percentage of unlabeled cells
+will be included in the output, providing additional insight into the
+classification process.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">report</span><span class="o">.</span><span class="n">classification_metrics</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">classification_obs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CIA prediction default&#39;</span><span class="p">,</span> <span class="s1">&#39;CIA prediction t=0.05&#39;</span><span class="p">,</span>
+                                                          <span class="s1">&#39;CIA prediction t=0.1&#39;</span><span class="p">,</span> <span class="s1">&#39;CIA prediction t=0.15&#39;</span><span class="p">,</span>
+                                                          <span class="s1">&#39;CIA no B t=0&#39;</span><span class="p">,</span> <span class="s1">&#39;CIA no B t=0.1&#39;</span><span class="p">],</span>
+                              <span class="n">unassigned_label</span><span class="o">=</span><span class="s1">&#39;Unassigned&#39;</span><span class="p">,</span> <span class="n">groups_obs</span><span class="o">=</span><span class="s1">&#39;Cell type&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>SE</th>
+      <th>SP</th>
+      <th>PR</th>
+      <th>ACC</th>
+      <th>F1</th>
+      <th>%UN</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>CIA prediction default</th>
+      <td>0.915845</td>
+      <td>0.985974</td>
+      <td>0.915845</td>
+      <td>0.975956</td>
+      <td>0.915845</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <th>CIA prediction t=0.05</th>
+      <td>0.936049</td>
+      <td>0.989341</td>
+      <td>0.936049</td>
+      <td>0.981728</td>
+      <td>0.936049</td>
+      <td>6.94</td>
+    </tr>
+    <tr>
+      <th>CIA prediction t=0.1</th>
+      <td>0.951932</td>
+      <td>0.991989</td>
+      <td>0.951932</td>
+      <td>0.986266</td>
+      <td>0.951932</td>
+      <td>15.62</td>
+    </tr>
+    <tr>
+      <th>CIA prediction t=0.15</th>
+      <td>0.960435</td>
+      <td>0.993406</td>
+      <td>0.960435</td>
+      <td>0.988696</td>
+      <td>0.960435</td>
+      <td>23.35</td>
+    </tr>
+    <tr>
+      <th>CIA no B t=0</th>
+      <td>0.787339</td>
+      <td>0.964556</td>
+      <td>0.787339</td>
+      <td>0.939240</td>
+      <td>0.787339</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <th>CIA no B t=0.1</th>
+      <td>0.927979</td>
+      <td>0.987997</td>
+      <td>0.927979</td>
+      <td>0.979423</td>
+      <td>0.927979</td>
+      <td>26.84</td>
+    </tr>
+  </tbody>
+</table>
+</div></section>
+<section id="tips">
+<h2>Tips<a class="headerlink" href="#tips" title="Link to this heading"></a></h2>
+<section id="direct-inspection-of-msigdb-signatures">
+<h3>Direct inspection of MSigDB signatures<a class="headerlink" href="#direct-inspection-of-msigdb-signatures" title="Link to this heading"></a></h3>
+<p>With the <code class="docutils literal notranslate"><span class="pre">signature_score</span></code> function, you can compute and inspect
+signatures from the
+<a class="reference external" href="https://www.gsea-msigdb.org/gsea/msigdb/">MSigDB</a> by simply
+providing the corresponding URL.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">investigate</span><span class="o">.</span><span class="n">signature_score</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">signatures_input</span><span class="o">=</span><span class="s1">&#39;https://www.gsea-msigdb.org/gsea/msigdb/human/download_geneset.jsp?geneSetName=GOBP_PHAGOCYTOSIS&amp;fileType=gmt&#39;</span><span class="p">,</span>
+                            <span class="n">score_mode</span><span class="o">=</span><span class="s1">&#39;scaled&#39;</span><span class="p">,</span> <span class="n">n_cpus</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+<span class="n">sc</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">umap</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;GOBP_PHAGOCYTOSIS&#39;</span><span class="p">,</span> <span class="n">color_map</span><span class="o">=</span><span class="s1">&#39;Reds&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Checking</span> <span class="k">if</span> <span class="n">genes</span> <span class="n">are</span> <span class="ow">in</span> <span class="n">AnnData</span><span class="o">.</span><span class="n">var_names</span><span class="o">...</span>
+
+<span class="n">GOBP_PHAGOCYTOSIS</span><span class="p">:</span> <span class="mi">175</span><span class="o">/</span><span class="mi">238</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_74_1.png" src="../../_images/output_74_1.png" />
+</section>
+<section id="majority-voting">
+<h3>Majority voting<a class="headerlink" href="#majority-voting" title="Link to this heading"></a></h3>
+<p>The <strong>Celltypist</strong> classifier
+<a class="reference external" href="https://www.science.org/doi/10.1126/science.abl5197">[4]</a> features
+an intriguing process called <strong>‘majority voting,’</strong> which refines cell
+identities within subclusters following an <strong>over-clustering step</strong>. In
+essence, <strong>within each subcluster</strong>, the <strong>label of the predominant cell
+type is applied</strong> to all cells in that group. While this step extends
+beyond the standard CIA workflow, we aimed to compare classification
+results under optimal conditions. To this end, we developed the
+<code class="docutils literal notranslate"><span class="pre">celltypist_majority_vote</span></code> function (<strong>external module</strong>) to emulate
+the ‘majority voting’ mechanism.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">colnames</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;CIA prediction default&#39;</span><span class="p">,</span> <span class="s1">&#39;CIA prediction t=0.1&#39;</span><span class="p">]</span>
+<span class="n">external</span><span class="o">.</span><span class="n">celltypist_majority_vote</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span><span class="n">classification_obs</span><span class="o">=</span><span class="n">colnames</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Reference</span> <span class="n">annotation</span> <span class="ow">not</span> <span class="n">selected</span><span class="o">.</span> <span class="n">Computing</span> <span class="n">over</span><span class="o">-</span><span class="n">clustering</span> <span class="k">with</span> <span class="n">Leiden</span> <span class="n">algorithm</span> <span class="p">(</span><span class="n">resolution</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span> <span class="o">...</span>
+<span class="n">Dataset</span> <span class="n">has</span> <span class="n">been</span> <span class="n">divided</span> <span class="n">into</span> <span class="mi">69</span> <span class="n">groups</span> <span class="n">according</span> <span class="n">to</span> <span class="n">transcriptional</span> <span class="n">similarities</span><span class="o">.</span>
+<span class="n">Over</span><span class="o">-</span><span class="n">clustering</span> <span class="n">result</span> <span class="n">saved</span> <span class="ow">in</span> <span class="n">AnnData</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s2">&quot;leiden_5&quot;</span><span class="p">]</span><span class="o">.</span>
+<span class="n">Extending</span> <span class="n">the</span> <span class="n">more</span> <span class="n">represented</span> <span class="n">cell</span> <span class="nb">type</span> <span class="n">label</span> <span class="n">to</span> <span class="n">each</span> <span class="n">cell</span> <span class="n">group</span><span class="o">...</span>
+
+<span class="n">New</span> <span class="n">classification</span> <span class="n">labels</span> <span class="n">have</span> <span class="n">been</span> <span class="n">stored</span> <span class="ow">in</span> <span class="n">AnnData</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s2">&quot;CIA prediction default_majority_voting&quot;</span><span class="p">]</span><span class="o">.</span>
+<span class="n">New</span> <span class="n">classification</span> <span class="n">labels</span> <span class="n">have</span> <span class="n">been</span> <span class="n">stored</span> <span class="ow">in</span> <span class="n">AnnData</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s2">&quot;CIA prediction t=0.1_majority_voting&quot;</span><span class="p">]</span><span class="o">.</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sc</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">umap</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;leiden_5&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ferrari</span><span class="o">/</span><span class="n">miniconda414</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">cia</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.10</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">scanpy</span><span class="o">/</span><span class="n">plotting</span><span class="o">/</span><span class="n">_tools</span><span class="o">/</span><span class="n">scatterplots</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">392</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">No</span> <span class="n">data</span> <span class="k">for</span> <span class="n">colormapping</span> <span class="n">provided</span> <span class="n">via</span> <span class="s1">&#39;c&#39;</span><span class="o">.</span> <span class="n">Parameters</span> <span class="s1">&#39;cmap&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">ignored</span>
+  <span class="n">cax</span> <span class="o">=</span> <span class="n">scatter</span><span class="p">(</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_78_1.png" src="../../_images/output_78_1.png" />
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">colnames_mv</span><span class="o">=</span><span class="p">[</span><span class="n">c</span><span class="o">+</span><span class="s1">&#39;_majority_voting&#39;</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">colnames</span><span class="p">]</span>
+<span class="n">pbmc3k</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s1">&#39;CIA prediction default_majority_voting_colors&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;#fb9a99&#39;</span><span class="p">,</span> <span class="s1">&#39;#b2df8a&#39;</span><span class="p">,</span> <span class="s1">&#39;#1f78b4&#39;</span><span class="p">,</span> <span class="s1">&#39;#d62728&#39;</span><span class="p">,</span>
+                                                             <span class="s1">&#39;#6fadfd&#39;</span><span class="p">,</span> <span class="s1">&#39;#E4D00A&#39;</span><span class="p">,</span><span class="s1">&#39;#FF5733&#39;</span><span class="p">]</span>
+<span class="n">pbmc3k</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="s1">&#39;CIA prediction t=0.1_majority_voting_colors&#39;</span><span class="p">]</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;#fb9a99&#39;</span><span class="p">,</span> <span class="s1">&#39;#b2df8a&#39;</span><span class="p">,</span> <span class="s1">&#39;#1f78b4&#39;</span><span class="p">,</span> <span class="s1">&#39;#d62728&#39;</span><span class="p">,</span>
+                                                           <span class="s1">&#39;#6fadfd&#39;</span><span class="p">,</span> <span class="s1">&#39;#E4D00A&#39;</span><span class="p">,</span><span class="s1">&#39;#FF5733&#39;</span><span class="p">,</span><span class="s1">&#39;#808080&#39;</span><span class="p">]</span>
+<span class="n">sc</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">umap</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colnames_mv</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ferrari</span><span class="o">/</span><span class="n">miniconda414</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">cia</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.10</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">scanpy</span><span class="o">/</span><span class="n">plotting</span><span class="o">/</span><span class="n">_tools</span><span class="o">/</span><span class="n">scatterplots</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">392</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">No</span> <span class="n">data</span> <span class="k">for</span> <span class="n">colormapping</span> <span class="n">provided</span> <span class="n">via</span> <span class="s1">&#39;c&#39;</span><span class="o">.</span> <span class="n">Parameters</span> <span class="s1">&#39;cmap&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">ignored</span>
+  <span class="n">cax</span> <span class="o">=</span> <span class="n">scatter</span><span class="p">(</span>
+<span class="o">/</span><span class="n">mnt</span><span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ferrari</span><span class="o">/</span><span class="n">miniconda414</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">cia</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.10</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">scanpy</span><span class="o">/</span><span class="n">plotting</span><span class="o">/</span><span class="n">_tools</span><span class="o">/</span><span class="n">scatterplots</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">392</span><span class="p">:</span> <span class="ne">UserWarning</span><span class="p">:</span> <span class="n">No</span> <span class="n">data</span> <span class="k">for</span> <span class="n">colormapping</span> <span class="n">provided</span> <span class="n">via</span> <span class="s1">&#39;c&#39;</span><span class="o">.</span> <span class="n">Parameters</span> <span class="s1">&#39;cmap&#39;</span> <span class="n">will</span> <span class="n">be</span> <span class="n">ignored</span>
+  <span class="n">cax</span> <span class="o">=</span> <span class="n">scatter</span><span class="p">(</span>
+</pre></div>
+</div>
+<img alt="../../_images/output_79_1.png" src="../../_images/output_79_1.png" />
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">report</span><span class="o">.</span><span class="n">classification_metrics</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">classification_obs</span><span class="o">=</span><span class="n">colnames_mv</span><span class="p">,</span>
+                              <span class="n">unassigned_label</span><span class="o">=</span><span class="s1">&#39;Unassigned&#39;</span><span class="p">,</span> <span class="n">groups_obs</span><span class="o">=</span><span class="s1">&#39;Cell type&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>SE</th>
+      <th>SP</th>
+      <th>PR</th>
+      <th>ACC</th>
+      <th>F1</th>
+      <th>%UN</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>CIA prediction default_majority_voting</th>
+      <td>0.967779</td>
+      <td>0.994630</td>
+      <td>0.967779</td>
+      <td>0.990794</td>
+      <td>0.967779</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>CIA prediction t=0.1_majority_voting</th>
+      <td>0.967138</td>
+      <td>0.994523</td>
+      <td>0.967138</td>
+      <td>0.990611</td>
+      <td>0.967138</td>
+      <td>0.8</td>
+    </tr>
+  </tbody>
+</table>
+</div></section>
+<section id="extraction-of-signatures-from-differentially-expressed-genes">
+<h3>Extraction of signatures from Differentially Expressed Genes<a class="headerlink" href="#extraction-of-signatures-from-differentially-expressed-genes" title="Link to this heading"></a></h3>
+<p>If you have a dataset from which <strong>you want to extract signatures</strong> for
+use with CIA to classify other datasets, <strong>you can use the</strong>
+<code class="docutils literal notranslate"><span class="pre">filter_degs</span></code> function. This function filters differentially expressed
+genes (DEGs) obtained with <code class="docutils literal notranslate"><span class="pre">scanpy.tl.rank_genes_groups</span></code> based on
+specified thresholds. For instance, in the example provided, the
+thresholds include a log2 fold change greater than 1, a minimum average
+expression level of 0.2, a z-score above 5, and expression in at least
+30% of the cells within each cluster.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sc</span><span class="o">.</span><span class="n">tl</span><span class="o">.</span><span class="n">rank_genes_groups</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">groupby</span><span class="o">=</span><span class="s1">&#39;louvain&#39;</span><span class="p">)</span>
+<span class="n">gmt</span><span class="o">=</span><span class="n">utils</span><span class="o">.</span><span class="n">filter_degs</span><span class="p">(</span><span class="n">pbmc3k</span><span class="p">,</span> <span class="n">groupby</span><span class="o">=</span><span class="s1">&#39;louvain&#39;</span><span class="p">,</span> <span class="n">uns_key</span><span class="o">=</span><span class="s1">&#39;rank_genes_groups&#39;</span><span class="p">,</span> <span class="n">logFC</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="n">scores</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">perc</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+                <span class="n">mean</span><span class="o">=</span><span class="mf">0.20</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s1">&#39;up&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">gmt</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="s1">&#39; signature has &#39;</span><span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">gmt</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span> <span class="o">+</span><span class="s1">&#39; genes&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">WARNING</span><span class="p">:</span> <span class="n">Default</span> <span class="n">of</span> <span class="n">the</span> <span class="n">method</span> <span class="n">has</span> <span class="n">been</span> <span class="n">changed</span> <span class="n">to</span> <span class="s1">&#39;t-test&#39;</span> <span class="kn">from</span> <span class="s1">&#39;t-test_overestim_var&#39;</span>
+<span class="n">CD4</span> <span class="n">T</span> <span class="n">cells</span> <span class="n">signature</span> <span class="n">has</span> <span class="mi">68</span> <span class="n">genes</span>
+<span class="n">CD14</span><span class="o">+</span> <span class="n">Monocytes</span> <span class="n">signature</span> <span class="n">has</span> <span class="mi">228</span> <span class="n">genes</span>
+<span class="n">B</span> <span class="n">cells</span> <span class="n">signature</span> <span class="n">has</span> <span class="mi">45</span> <span class="n">genes</span>
+<span class="n">CD8</span> <span class="n">T</span> <span class="n">cells</span> <span class="n">signature</span> <span class="n">has</span> <span class="mi">40</span> <span class="n">genes</span>
+<span class="n">NK</span> <span class="n">cells</span> <span class="n">signature</span> <span class="n">has</span> <span class="mi">125</span> <span class="n">genes</span>
+<span class="n">FCGR3A</span><span class="o">+</span> <span class="n">Monocytes</span> <span class="n">signature</span> <span class="n">has</span> <span class="mi">392</span> <span class="n">genes</span>
+<span class="n">Dendritic</span> <span class="n">cells</span> <span class="n">signature</span> <span class="n">has</span> <span class="mi">100</span> <span class="n">genes</span>
+<span class="n">Megakaryocytes</span> <span class="n">signature</span> <span class="n">has</span> <span class="mi">47</span> <span class="n">genes</span>
+</pre></div>
+</div>
+<p>Using the <code class="docutils literal notranslate"><span class="pre">save_gmt</span></code> function, you can convert a dictionary of
+signatures into a gmt file that is correctly formatted for the
+<code class="docutils literal notranslate"><span class="pre">signature_score</span></code> and <code class="docutils literal notranslate"><span class="pre">signature_based_classification</span></code> functions.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">utils</span><span class="o">.</span><span class="n">save_gmt</span><span class="p">(</span><span class="n">gmt</span><span class="p">,</span> <span class="s1">&#39;./data/pbmc3k_sig.gmt&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="conclusion">
+<h1>Conclusion<a class="headerlink" href="#conclusion" title="Link to this heading"></a></h1>
+<p>In this notebook, we have showed the robustness and versatility of the
+<strong>Cluster Independent Annotation (CIA)</strong> method. Through the computation
+of signature scores and subsequent cell classification, <strong>CIA provides a
+fast and efficient approach to cell type annotation in single-cell RNA
+sequencing data</strong>. Additionally, we have shown that by increasing the
+similarity threshold, CIA can effectively mitigate misclassifications,
+illuminating the presence of ambiguous or novel cell types.</p>
+</section>
+<section id="references">
+<h1>References<a class="headerlink" href="#references" title="Link to this heading"></a></h1>
+<ol class="arabic simple">
+<li><p>Hao, Y., et al. (2021). Integrated analysis of multimodal single-cell
+data. <em>Cell</em>, 184(13), 3573-3587.e29.
+<a class="reference external" href="https://www.sciencedirect.com/science/article/pii/S0092867421005833">https://www.sciencedirect.com/science/article/pii/S0092867421005833</a></p></li>
+<li><p>Satija, R., Farrell, J. A., Gennert, D., Schier, A. F., &amp; Regev, A.
+(2015). Spatial reconstruction of single-cell gene expression data.
+<em>Nature Biotechnology</em>, 33, 495–502.
+<a class="reference external" href="https://www.nature.com/articles/nbt.3192">https://www.nature.com/articles/nbt.3192</a></p></li>
+<li><p>Della Chiara, G., et al. (2021). Gene signature extraction and cell
+identity recognition at the single-cell level with Cell ID. <em>Nature
+Communications</em>, 12, 2262.
+<a class="reference external" href="https://www.nature.com/articles/s41467-021-22544-y">https://www.nature.com/articles/s41467-021-22544-y</a></p></li>
+<li><p>Celltypist Classifier. (2022). Cell type annotation for single-cell
+RNA-seq data with CellTypist. <em>Science</em>, 374, eabj8222.
+<a class="reference external" href="https://www.science.org/doi/10.1126/science.abl5197">https://www.science.org/doi/10.1126/science.abl5197</a></p></li>
+</ol>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../../api/cia.html" class="btn btn-neutral float-left" title="cia package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../../license.html" class="btn btn-neutral float-right" title="License" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, National Institue of Molecular Genetics (INGM).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

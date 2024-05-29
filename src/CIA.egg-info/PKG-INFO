@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: CIA
-Version: 0.0.post1.dev11+g24286f7.d20240317
+Version: 0.0.post1.dev12+g0e070d6.d20240419
 Summary: Add a short description here!
 Home-page: https://github.com/pyscaffold/pyscaffold/
 Author: Ivan Ferrari
@@ -12,7 +12,6 @@ Classifier: Development Status :: 4 - Beta
 Classifier: Programming Language :: Python
 Description-Content-Type: text/x-rst; charset=UTF-8
 License-File: LICENSE.txt
-Requires-Dist: importlib-metadata; python_version < "3.8"
 Provides-Extra: testing
 Requires-Dist: setuptools; extra == "testing"
 Requires-Dist: pytest; extra == "testing"

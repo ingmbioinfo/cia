@@ -45,7 +45,7 @@ def load_signatures(signatures_input):
         raise TypeError("signatures_input must be either a dict or a string path/URL to a GMT file.")
     return signatures
 
-def compute_signature_scores(data, geneset):
+def score_signature(data, geneset):
     """
     Compute signature scores (from https://doi.org/10.1038/s41467-021-22544-y) for a single gene set against the provided dataset.
 
@@ -91,7 +91,7 @@ def compute_signature_scores(data, geneset):
 
 
 
-def signature_score(data, signatures_input, score_mode='raw', return_df=False, n_cpus=None):
+def score_all_signatures(data, signatures_input, score_mode='raw', return_df=False, n_cpus=None):
     """
     Compute signature scores for a given dataset and a set of gene signatures.
 
@@ -143,7 +143,7 @@ def signature_score(data, signatures_input, score_mode='raw', return_df=False, n
     # Define a function that will be executed in parallel
     def compute_score(name_geneset_tuple):
         name, geneset = name_geneset_tuple
-        return name, compute_signature_scores(data, geneset)
+        return name, score_signature(data, geneset)
 
     # Use ThreadPoolExecutor to parallelize the score computation
     scores = {}
@@ -174,7 +174,7 @@ def signature_score(data, signatures_input, score_mode='raw', return_df=False, n
         return scores_df
 
             
-def signature_based_classification(data, signatures_input, n_cpus=None, similarity_threshold=0, label_column='CIA prediction', unassigned_label='Unassigned'):
+def CIA_classify(data, signatures_input, n_cpus=None, similarity_threshold=0, label_column='CIA_prediction', score_mode='scaled', unassigned_label='Unassigned'):
     """
     Classify cells in `data` based on gene signature scores.
 
@@ -207,18 +207,18 @@ def signature_based_classification(data, signatures_input, n_cpus=None, similari
 
     Notes
     -----
-    The function calculates signature scores using the `signature_score` function. The highest score is used for
+    The function calculates signature scores using the `score_all_signatures` function. The highest score is used for
     classification unless it is within the `similarity_threshold` of the second-highest score.
 
     Examples
     --------
     >>> data = sc.read_h5ad('path/to/your/data.h5ad')  # Assume sc is Scanpy and data is loaded
     >>> signatures_input = 'path/to/signatures.txt'
-    >>> signature_based_classification(data, signatures_input, similarity_threshold=0.1)
+    >>> CIA_classify(data, signatures_input, similarity_threshold=0.1)
     >>> data.obs['CIA prediction']
     """
     start_time=time.time()
-    scores_df = signature_score(data, signatures_input, score_mode='scaled', return_df=True, n_cpus=n_cpus)
+    scores_df = score_all_signatures(data, signatures_input, score_mode=score_mode, return_df=True, n_cpus=n_cpus)
 
     # Identify the indices of the highest and second highest scores
     sorted_scores_idx = np.argsort(-scores_df.values, axis=1)

@@ -56,5 +56,3 @@ def celltypist_majority_vote(data, classification_obs, groups_obs=None, min_prop
         data.obs[f'{classification}_majority_voting'] = groups.map(majority_labels).astype('category')
 
         print(f'New classification labels have been stored in AnnData.obs["{classification}_majority_voting"].')
-
-    return data

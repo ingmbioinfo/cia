@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cia.utils &mdash; CIA 0.0.post1.dev12+g0e070d6.d20240318 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b76e3c8a" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=3b7bfa81"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            CIA
+          </a>
+              <div class="version">
+                0.0.post1.dev12+g0e070d6.d20240318
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html">CIA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html#installation">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial/workflow/Cluster_Independent_Annotation.html">CLUSTER INDEPENDENT ANNOTATION</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial/workflow/Cluster_Independent_Annotation.html#conclusion">Conclusion</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial/workflow/Cluster_Independent_Annotation.html#references">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">CIA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">cia.utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for cia.utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">itertools</span> 
+<span class="kn">import</span> <span class="nn">scipy</span>
+
+<div class="viewcode-block" id="signatures_similarity">
+<a class="viewcode-back" href="../../modules_modified.html#cia.utils.signatures_similarity">[docs]</a>
+<span class="k">def</span> <span class="nf">signatures_similarity</span><span class="p">(</span><span class="n">signatures_dict</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="s1">&#39;J&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the similarity between gene signatures.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    signatures_dict : dict</span>
+<span class="sd">        A dictionary having as keys the signature names and as values the lists of gene names (gene signatures).</span>
+<span class="sd">    show : str, optional</span>
+<span class="sd">        Specifies the metric for showing similarities: &#39;J&#39; for Jaccard index or &#39;%&#39; for percentages of intersection.</span>
+<span class="sd">        Default is &#39;J&#39;.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    similarity : pandas.DataFrame</span>
+<span class="sd">        A DataFrame containing the similarity of each pair of signatures, with signatures as both rows and columns.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If &#39;show&#39; is different from &#39;J&#39; or &#39;%&#39;.</span>
+
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
+<span class="sd">    &gt;&gt;&gt; signatures = {</span>
+<span class="sd">    &gt;&gt;&gt;     &#39;signature1&#39;: [&#39;gene1&#39;, &#39;gene2&#39;, &#39;gene3&#39;],</span>
+<span class="sd">    &gt;&gt;&gt;     &#39;signature2&#39;: [&#39;gene2&#39;, &#39;gene3&#39;, &#39;gene4&#39;],</span>
+<span class="sd">    &gt;&gt;&gt;     &#39;signature3&#39;: [&#39;gene1&#39;, &#39;gene5&#39;]</span>
+<span class="sd">    &gt;&gt;&gt; }</span>
+<span class="sd">    &gt;&gt;&gt; similarity = signatures_similarity(signatures, show=&#39;J&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; print(similarity)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">show</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;J&#39;</span><span class="p">,</span> <span class="s1">&#39;%&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;show must be &quot;J&quot; or &quot;%&quot;.&#39;</span><span class="p">)</span>
+    
+    <span class="n">signature_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">signatures_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">signature_names</span><span class="p">)</span>
+    <span class="n">similarity_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+            <span class="n">intersec</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span><span class="n">signatures_dict</span><span class="p">[</span><span class="n">signature_names</span><span class="p">[</span><span class="n">i</span><span class="p">]],</span> <span class="n">signatures_dict</span><span class="p">[</span><span class="n">signature_names</span><span class="p">[</span><span class="n">j</span><span class="p">]]))</span>
+            <span class="k">if</span> <span class="n">show</span> <span class="o">==</span> <span class="s1">&#39;J&#39;</span><span class="p">:</span>
+                <span class="n">union</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">union1d</span><span class="p">(</span><span class="n">signatures_dict</span><span class="p">[</span><span class="n">signature_names</span><span class="p">[</span><span class="n">i</span><span class="p">]],</span> <span class="n">signatures_dict</span><span class="p">[</span><span class="n">signature_names</span><span class="p">[</span><span class="n">j</span><span class="p">]]))</span>
+                <span class="n">similarity</span> <span class="o">=</span> <span class="n">intersec</span> <span class="o">/</span> <span class="n">union</span>
+            <span class="k">elif</span> <span class="n">show</span> <span class="o">==</span> <span class="s1">&#39;%&#39;</span><span class="p">:</span>
+                <span class="n">similarity</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="mi">100</span> <span class="o">*</span> <span class="n">intersec</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">signatures_dict</span><span class="p">[</span><span class="n">signature_names</span><span class="p">[</span><span class="n">i</span><span class="p">]]),</span> <span class="mi">2</span><span class="p">)</span>
+            
+            <span class="n">similarity_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">similarity_matrix</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">similarity</span>
+
+    <span class="n">similarity</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">similarity_matrix</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">signature_names</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">signature_names</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">similarity</span></div>
+
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.sparse</span>
+
+<div class="viewcode-block" id="filter_degs">
+<a class="viewcode-back" href="../../modules_modified.html#cia.utils.filter_degs">[docs]</a>
+<span class="k">def</span> <span class="nf">filter_degs</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">groupby</span><span class="p">,</span> <span class="n">uns_key</span><span class="o">=</span><span class="s1">&#39;rank_genes_groups&#39;</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s1">&#39;up&#39;</span><span class="p">,</span> <span class="n">logFC</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scores</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">perc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Filters differentially expressed genes (DEGs) obtained with scanpy.tl.rank_genes_groups based on given thresholds.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : anndata.AnnData</span>
+<span class="sd">        An AnnData object containing the analysis results.</span>
+<span class="sd">    groupby : str</span>
+<span class="sd">        Column in AnnData.obs containing cell group labels.</span>
+<span class="sd">    uns_key : str</span>
+<span class="sd">        Key in AnnData.uns where differential expression analysis results are stored.</span>
+<span class="sd">    direction : str</span>
+<span class="sd">        Specifies if filtering for upregulated (&#39;up&#39;) or downregulated (&#39;down&#39;) genes.</span>
+<span class="sd">    logFC : float</span>
+<span class="sd">        Log fold change threshold to filter genes.</span>
+<span class="sd">    scores : float, optional</span>
+<span class="sd">        Z score threshold to filter genes.</span>
+<span class="sd">    perc : float</span>
+<span class="sd">        Percentage of cells expressing the gene threshold.</span>
+<span class="sd">    mean : float</span>
+<span class="sd">        Mean expression threshold to filter genes.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    signatures_dict : dict</span>
+<span class="sd">        Dictionary with cell group names as keys and lists of filtered gene names as values.</span>
+<span class="sd">    </span>
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If &#39;direction&#39; is not &#39;up&#39; or &#39;down&#39;.</span>
+<span class="sd">    </span>
+<span class="sd">    Example</span>
+<span class="sd">    -------</span>
+<span class="sd">    &gt;&gt;&gt; import scanpy as sc</span>
+<span class="sd">    &gt;&gt;&gt; adata = sc.datasets.pbmc68k_reduced()</span>
+<span class="sd">    &gt;&gt;&gt; sc.tl.rank_genes_groups(adata, &#39;louvain&#39;, method=&#39;t-test&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; filtered_genes = filter_degs(adata, &#39;louvain&#39;, direction=&#39;up&#39;, logFC=1, perc=10, mean=0.1)</span>
+<span class="sd">    &gt;&gt;&gt; print(filtered_genes[&#39;0&#39;])  # Show filtered genes for the first group</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">signatures_dict</span><span class="o">=</span><span class="p">{}</span>
+    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groupby</span><span class="p">]</span><span class="o">.</span><span class="n">cat</span><span class="o">.</span><span class="n">categories</span><span class="p">:</span>
+    <span class="c1">#for group in data.uns[uns_key][&#39;names&#39;].dtype.names:</span>
+        <span class="n">degs</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="n">uns_key</span><span class="p">][</span><span class="s1">&#39;names&#39;</span><span class="p">][</span><span class="n">group</span><span class="p">]</span> 
+
+
+        <span class="n">n_cells</span><span class="o">=</span><span class="nb">sum</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groupby</span><span class="p">]</span><span class="o">==</span><span class="n">group</span><span class="p">)</span>
+
+
+        
+        <span class="k">if</span> <span class="n">direction</span><span class="o">==</span><span class="s1">&#39;up&#39;</span><span class="p">:</span>
+            
+            <span class="n">order</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="n">uns_key</span><span class="p">][</span><span class="s1">&#39;logfoldchanges&#39;</span><span class="p">][</span><span class="n">group</span><span class="p">])</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">index</span>
+            <span class="n">degs</span><span class="o">=</span> <span class="n">degs</span><span class="p">[</span><span class="n">order</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">X</span><span class="p">):</span>
+                <span class="n">cells</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groupby</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="n">group</span><span class="p">])][:,</span><span class="n">degs</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">todense</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">/</span><span class="n">n_cells</span><span class="o">*</span><span class="mi">100</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cells</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groupby</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="n">group</span><span class="p">])][:,</span><span class="n">degs</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span><span class="o">.</span><span class="n">X</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">/</span><span class="n">n_cells</span><span class="o">*</span><span class="mi">100</span><span class="p">)</span>
+            <span class="n">cells</span> <span class="o">=</span><span class="p">(</span><span class="n">cells</span> <span class="o">&gt;=</span> <span class="n">perc</span><span class="p">)</span>
+            
+            <span class="n">gene_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groupby</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="n">group</span><span class="p">])][:,</span><span class="n">degs</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+            <span class="n">gene_mean</span> <span class="o">=</span> <span class="p">(</span><span class="n">gene_mean</span> <span class="o">&gt;=</span> <span class="n">mean</span> <span class="p">)</span>
+            
+            <span class="n">lfc</span><span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="n">uns_key</span><span class="p">][</span><span class="s1">&#39;logfoldchanges&#39;</span><span class="p">][</span><span class="n">group</span><span class="p">]</span>
+            <span class="n">lfc</span><span class="o">=</span> <span class="p">(</span><span class="n">lfc</span><span class="p">[</span><span class="n">order</span><span class="p">]</span> <span class="o">&gt;=</span><span class="n">logFC</span><span class="p">)</span>
+            
+            <span class="n">filters</span><span class="o">=</span><span class="p">[</span><span class="n">cells</span><span class="p">,</span> <span class="n">gene_mean</span><span class="p">,</span> <span class="n">lfc</span><span class="p">]</span>
+            
+            <span class="k">if</span> <span class="n">scores</span><span class="o">!=</span><span class="kc">None</span><span class="p">:</span>
+                <span class="n">s</span><span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="n">uns_key</span><span class="p">][</span><span class="s1">&#39;scores&#39;</span><span class="p">][</span><span class="n">group</span><span class="p">]</span>
+                <span class="n">s</span><span class="o">=</span> <span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">order</span><span class="p">]</span> <span class="o">&gt;=</span><span class="n">scores</span><span class="p">)</span>
+                <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            
+
+            <span class="n">filters</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">bitwise_and</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">filters</span><span class="p">)</span>
+            <span class="n">signatures_dict</span><span class="p">[</span><span class="n">group</span><span class="p">]</span><span class="o">=</span> <span class="n">degs</span><span class="p">[</span><span class="n">filters</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            
+            
+
+            
+        <span class="k">elif</span> <span class="n">direction</span><span class="o">==</span><span class="s1">&#39;down&#39;</span><span class="p">:</span>
+
+            <span class="n">order</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="n">uns_key</span><span class="p">][</span><span class="s1">&#39;logfoldchanges&#39;</span><span class="p">][</span><span class="n">group</span><span class="p">])</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">index</span>
+            <span class="n">degs</span><span class="o">=</span> <span class="n">degs</span><span class="p">[</span><span class="n">order</span><span class="p">]</span>
+            
+            <span class="k">if</span> <span class="n">scipy</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">X</span><span class="p">):</span>
+                <span class="n">cells</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groupby</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="n">group</span><span class="p">])][:,</span><span class="n">degs</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">todense</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">/</span><span class="n">n_cells</span><span class="o">*</span><span class="mi">100</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cells</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groupby</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="n">group</span><span class="p">])][:,</span><span class="n">degs</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span><span class="o">.</span><span class="n">X</span><span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">/</span><span class="n">n_cells</span><span class="o">*</span><span class="mi">100</span><span class="p">)</span>
+            <span class="n">cells</span> <span class="o">=</span><span class="p">(</span><span class="n">cells</span> <span class="o">&lt;=</span> <span class="n">perc</span><span class="p">)</span>
+            
+            <span class="n">gene_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">groupby</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="n">group</span><span class="p">])][:,</span><span class="n">degs</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+            <span class="n">gene_mean</span> <span class="o">=</span> <span class="p">(</span><span class="n">gene_mean</span> <span class="o">&lt;=</span> <span class="n">mean</span> <span class="p">)</span>
+            
+            <span class="n">lfc</span><span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="n">uns_key</span><span class="p">][</span><span class="s1">&#39;logfoldchanges&#39;</span><span class="p">][</span><span class="n">group</span><span class="p">]</span>
+            <span class="n">lfc</span><span class="o">=</span> <span class="p">(</span><span class="n">lfc</span><span class="p">[</span><span class="n">order</span><span class="p">]</span> <span class="o">&lt;=</span><span class="n">logFC</span><span class="p">)</span>
+            
+            <span class="n">filters</span><span class="o">=</span><span class="p">[</span><span class="n">cells</span><span class="p">,</span> <span class="n">gene_mean</span><span class="p">,</span> <span class="n">lfc</span><span class="p">]</span>
+            
+            <span class="k">if</span> <span class="n">scores</span><span class="o">!=</span><span class="kc">None</span><span class="p">:</span>
+                <span class="n">s</span><span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">uns</span><span class="p">[</span><span class="n">uns_key</span><span class="p">][</span><span class="s1">&#39;scores&#39;</span><span class="p">][</span><span class="n">group</span><span class="p">]</span>
+                <span class="n">s</span><span class="o">=</span> <span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">order</span><span class="p">]</span> <span class="o">&lt;=</span><span class="n">scores</span><span class="p">)</span>
+                <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            
+
+            <span class="n">filters</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">bitwise_and</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">filters</span><span class="p">)</span>
+            <span class="n">signatures_dict</span><span class="p">[</span><span class="n">group</span><span class="p">]</span><span class="o">=</span> <span class="n">degs</span><span class="p">[</span><span class="n">filters</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;direction must be &quot;up&quot; or &quot;down&quot;.&#39;</span><span class="p">)</span>
+        
+    <span class="k">return</span> <span class="n">signatures_dict</span></div>
+
+
+<div class="viewcode-block" id="save_gmt">
+<a class="viewcode-back" href="../../modules_modified.html#cia.utils.save_gmt">[docs]</a>
+<span class="k">def</span> <span class="nf">save_gmt</span><span class="p">(</span><span class="n">signatures_dict</span><span class="p">,</span> <span class="n">file</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A function to convert a dictionary of signatures in a gmt file correctly formatted for signature_score and signature_based_classification functions.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">     </span>
+<span class="sd">    signatures_dict: dict</span>
+<span class="sd">        a dictionary having as keys the signature names and as values the gene signatures (lists of gene names).</span>
+<span class="sd">    file: str</span>
+<span class="sd">        filepath of gmt file. See pandas.DataFrame.to_csv documentation.  </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">signatures_dict</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s1">&#39;index&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, National Institue of Molecular Genetics (INGM).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

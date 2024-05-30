@@ -13,12 +13,12 @@ Contents
 ========
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    Overview <readme>
    Installation <installation>
-   Documentation <api/modules>
-   Tutorial: CIA workflow <tutorial/workflow/Cluster_Independent_Annotation>
+   API <api/modules>
+   Tutorial <tutorial/Cluster_Independent_Annotation>
    License <license>
    Authors <authors>
    Changelog <changelog>

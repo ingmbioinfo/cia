@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>cia.investigate &mdash; CIA 0.0.post1.dev13+g0c4d90c.d20240529 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=9d947148"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            CIA
+              <img src="../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.0.post1.dev13+g0c4d90c.d20240529
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../tutorial/Cluster_Independent_Annotation.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">CIA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">cia.investigate</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for cia.investigate</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">anndata</span> <span class="kn">import</span> <span class="n">AnnData</span>
+<span class="kn">import</span> <span class="nn">time</span> 
+<span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">ThreadPoolExecutor</span><span class="p">,</span> <span class="n">as_completed</span>
+
+<div class="viewcode-block" id="load_signatures">
+<a class="viewcode-back" href="../../api/cia.html#cia.investigate.load_signatures">[docs]</a>
+<span class="k">def</span> <span class="nf">load_signatures</span><span class="p">(</span><span class="n">signatures_input</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load gene signatures from a given source.</span>
+
+<span class="sd">    This function loads gene signatures from either a local file path, a URL, or directly from a dictionary. If a file path or URL is provided, the file should be in tab-separated format with the first column as keys and subsequent columns as values.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    signatures_input : str or dict</span>
+<span class="sd">        The source of the gene signatures. This can be a path to a tab-separated file, a URL pointing to such a file, or a dictionary where keys are signature names and values are lists of gene names.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        A dictionary where each key is a signature name and each value is a list of gene names associated with that signature.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    TypeError</span>
+<span class="sd">        If `signatures_input` is neither a string (for file paths or URLs) nor a dictionary.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; signatures = load_signatures(&#39;signatures.tsv&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; print(signatures[&#39;signature1&#39;])</span>
+<span class="sd">    [&#39;gene1&#39;, &#39;gene2&#39;, &#39;gene3&#39;]</span>
+
+<span class="sd">    &gt;&gt;&gt; signatures_dict = {&#39;signature1&#39;: [&#39;gene1&#39;, &#39;gene2&#39;], &#39;signature2&#39;: [&#39;gene3&#39;, &#39;gene4&#39;]}</span>
+<span class="sd">    &gt;&gt;&gt; signatures = load_signatures(signatures_dict)</span>
+<span class="sd">    &gt;&gt;&gt; print(signatures[&#39;signature1&#39;])</span>
+<span class="sd">    [&#39;gene1&#39;, &#39;gene2&#39;]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">signatures_input</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">signatures_input</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">signatures</span> <span class="o">=</span> <span class="p">{</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()}</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">signatures_input</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">signatures</span> <span class="o">=</span> <span class="n">signatures_input</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;signatures_input must be either a dict or a string path/URL to a GMT file.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">signatures</span></div>
+
+
+<div class="viewcode-block" id="score_signature">
+<a class="viewcode-back" href="../../api/cia.html#cia.investigate.score_signature">[docs]</a>
+<span class="k">def</span> <span class="nf">score_signature</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">geneset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute signature scores (from https://doi.org/10.1038/s41467-021-22544-y) for a single gene set against the provided dataset.</span>
+
+<span class="sd">    This function calculates the signature scores based on the presence (count) and expression (exp) of genes in the specified gene set within the dataset. </span>
+<span class="sd">    The score is the product of the count of genes expressed in a given cell and the sum of their expression levels, normalized by the total expression detected in the cell.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : AnnData</span>
+<span class="sd">        An AnnData object containing the dataset to compute scores for. It is expected to have an attribute `raw` containing an `X` matrix (observations x variables) and `var_names` (gene names).</span>
+<span class="sd">    geneset : array_like</span>
+<span class="sd">        A list or array of gene names for which to compute the signature scores.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    numpy.ndarray</span>
+<span class="sd">        An array of signature scores, one per observation (cell) in `data`.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The function first intersects the provided gene set with the gene names available in `data.raw.var_names` to ensure only relevant genes are considered. If no genes from the gene set are found in the data, the function returns an array of zeros.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import scanpy as sc</span>
+<span class="sd">    &gt;&gt;&gt; adata = sc.datasets.pbmc68k_reduced()</span>
+<span class="sd">    &gt;&gt;&gt; geneset = [&#39;CD3D&#39;, &#39;CD3E&#39;, &#39;CD3G&#39;, &#39;CD4&#39;, &#39;CD8A&#39;, &#39;CD8B&#39;]</span>
+<span class="sd">    &gt;&gt;&gt; scores = compute_signature_scores(adata, geneset)</span>
+<span class="sd">    &gt;&gt;&gt; print(scores.shape)</span>
+<span class="sd">    (700,)</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    AttributeError</span>
+<span class="sd">        If `data` does not have the required `raw` attribute or if `raw` does not have the `X` and `var_names` attributes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">geneset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span><span class="n">geneset</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">var_names</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">geneset</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="p">[:,</span> <span class="n">geneset</span><span class="p">]</span><span class="o">.</span><span class="n">X</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">exp</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="p">[:,</span> <span class="n">geneset</span><span class="p">]</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">count</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">exp</span><span class="p">))</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span></div>
+
+
+
+
+<div class="viewcode-block" id="score_all_signatures">
+<a class="viewcode-back" href="../../api/cia.html#cia.investigate.score_all_signatures">[docs]</a>
+<span class="k">def</span> <span class="nf">score_all_signatures</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">signatures_input</span><span class="p">,</span> <span class="n">score_mode</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">,</span> <span class="n">return_df</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_cpus</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute signature scores for a given dataset and a set of gene signatures.</span>
+
+<span class="sd">    This function checks which genes from the signatures are present in the dataset,</span>
+<span class="sd">    computes the signature scores for each cell in the dataset, and can return the scores</span>
+<span class="sd">    as a DataFrame or add them to the `data.obs`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : AnnData</span>
+<span class="sd">        An AnnData object containing the dataset to compute scores for, expected to have a `raw`</span>
+<span class="sd">        attribute containing a matrix (`X`) and `var_names`.</span>
+<span class="sd">    signatures_input : str or dict</span>
+<span class="sd">        Path to a file or a dictionary containing gene signatures. If a string is provided,</span>
+<span class="sd">        it should be the file path or URL to the signature file.</span>
+<span class="sd">    score_mode : str, optional</span>
+<span class="sd">        The mode of score calculation. Options are &#39;raw&#39;, &#39;scaled&#39;, &#39;log&#39;, &#39;log2&#39;, &#39;log10&#39;.</span>
+<span class="sd">        Defaults to &#39;raw&#39;.</span>
+<span class="sd">    return_df : bool, optional</span>
+<span class="sd">        If True, the function returns a DataFrame with signature scores. Otherwise, it adds</span>
+<span class="sd">        the scores to `data.obs`. Defaults to False.</span>
+<span class="sd">    n_cpus : int, optional</span>
+<span class="sd">        Number of CPU cores to use for parallel processing. If None, uses all available cores.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pandas.DataFrame or None</span>
+<span class="sd">        A DataFrame containing the signature scores if `return_df` is True. Otherwise, the function</span>
+<span class="sd">        adds the scores to `data.obs` and returns None.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The function parallelizes the computation of signature scores across the specified number of CPU cores.</span>
+<span class="sd">    It prints the number of genes found in both the signatures and the dataset for each signature.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; data = sc.read_h5ad(&#39;path/to/your/data.h5ad&#39;)  # Assume sc is Scanpy and data is loaded</span>
+<span class="sd">    &gt;&gt;&gt; signatures_input = &#39;path/to/signatures.txt&#39;</span>
+<span class="sd">    &gt;&gt;&gt; signature_scores = signature_score(data, signatures_input, score_mode=&#39;scaled&#39;, return_df=True)</span>
+<span class="sd">    &gt;&gt;&gt; signature_scores.head()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">signatures</span> <span class="o">=</span> <span class="n">load_signatures</span><span class="p">(</span><span class="n">signatures_input</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Checking if genes are in AnnData.var_names...</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">signatures_summary</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sig</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">intersect1d</span><span class="p">(</span><span class="n">genes</span><span class="p">,</span><span class="w"> </span><span class="n">data</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">var_names</span><span class="p">))</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">genes</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                      <span class="k">for</span> <span class="n">sig</span><span class="p">,</span> <span class="n">genes</span> <span class="ow">in</span> <span class="n">signatures</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">signatures_summary</span><span class="p">),</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="c1"># Define a function that will be executed in parallel</span>
+    <span class="k">def</span> <span class="nf">compute_score</span><span class="p">(</span><span class="n">name_geneset_tuple</span><span class="p">):</span>
+        <span class="n">name</span><span class="p">,</span> <span class="n">geneset</span> <span class="o">=</span> <span class="n">name_geneset_tuple</span>
+        <span class="k">return</span> <span class="n">name</span><span class="p">,</span> <span class="n">score_signature</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">geneset</span><span class="p">)</span>
+
+    <span class="c1"># Use ThreadPoolExecutor to parallelize the score computation</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">n_cpus</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+        <span class="c1"># Submit all tasks to the executor</span>
+        <span class="n">futures</span> <span class="o">=</span> <span class="p">[</span><span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">compute_score</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">signatures</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+        <span class="k">for</span> <span class="n">future</span> <span class="ow">in</span> <span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">):</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">score</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+            <span class="n">scores</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">score</span>
+        <span class="n">executor</span><span class="o">.</span><span class="n">shutdown</span><span class="p">(</span><span class="n">wait</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">del</span> <span class="n">futures</span>
+
+    <span class="n">scores_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">score_mode</span> <span class="o">==</span> <span class="s1">&#39;raw&#39;</span><span class="p">:</span>
+        <span class="k">pass</span>  <span class="c1"># scores_df is already in &#39;raw&#39; format</span>
+    <span class="k">elif</span> <span class="n">score_mode</span> <span class="o">==</span> <span class="s1">&#39;scaled&#39;</span><span class="p">:</span>
+        <span class="n">scores_df</span> <span class="o">=</span> <span class="n">scores_df</span> <span class="o">/</span> <span class="n">scores_df</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">score_mode</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;log&#39;</span><span class="p">,</span> <span class="s1">&#39;log2&#39;</span><span class="p">,</span> <span class="s1">&#39;log10&#39;</span><span class="p">]:</span>
+        <span class="n">min_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nextafter</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">log_func</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;log&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">,</span> <span class="s1">&#39;log2&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">,</span> <span class="s1">&#39;log10&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">}[</span><span class="n">score_mode</span><span class="p">]</span>
+        <span class="n">scores_df</span> <span class="o">=</span> <span class="n">log_func</span><span class="p">(</span><span class="n">scores_df</span> <span class="o">+</span> <span class="n">min_val</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid score_mode. Must be one of: [&#39;raw&#39;, &#39;scaled&#39;, &#39;log&#39;, &#39;log2&#39;, &#39;log10&#39;]&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">scores_df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">scores_df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">if</span> <span class="n">return_df</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">scores_df</span></div>
+
+
+            
+<div class="viewcode-block" id="CIA_classify">
+<a class="viewcode-back" href="../../api/cia.html#cia.investigate.CIA_classify">[docs]</a>
+<span class="k">def</span> <span class="nf">CIA_classify</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">signatures_input</span><span class="p">,</span> <span class="n">n_cpus</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">similarity_threshold</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">label_column</span><span class="o">=</span><span class="s1">&#39;CIA_prediction&#39;</span><span class="p">,</span> <span class="n">score_mode</span><span class="o">=</span><span class="s1">&#39;scaled&#39;</span><span class="p">,</span> <span class="n">unassigned_label</span><span class="o">=</span><span class="s1">&#39;Unassigned&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Classify cells in `data` based on gene signature scores.</span>
+
+<span class="sd">    This function computes scaled signature scores for the provided data against a set of gene signatures.</span>
+<span class="sd">    It then classifies each cell based on the highest score unless the top two scores are too similar,</span>
+<span class="sd">    in which case it assigns an &#39;Unassigned&#39; label.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : AnnData</span>
+<span class="sd">        An AnnData object containing the dataset to compute scores for, expected to have a `raw`</span>
+<span class="sd">        attribute containing a matrix (`X`) and `var_names`.</span>
+<span class="sd">    signatures_input : str or dict</span>
+<span class="sd">        Path to a file or a dictionary containing gene signatures. If a string is provided,</span>
+<span class="sd">        it should be the file path or URL to the signature file.</span>
+<span class="sd">    n_cpus : int, optional</span>
+<span class="sd">        Number of CPU cores to use for parallel computation. If None, all available cores are used.</span>
+<span class="sd">    similarity_threshold : float, optional</span>
+<span class="sd">        The threshold below which the top two scores are considered too similar, resulting in an &#39;Unassigned&#39; label.</span>
+<span class="sd">        Defaults to 0.1 (difference &lt; 10%).</span>
+<span class="sd">    label_column : str, optional</span>
+<span class="sd">        The column name in `data.obs` where the classification labels will be stored. Defaults to &#39;CIA prediction&#39;.</span>
+<span class="sd">    unassigned_label : str, optional</span>
+<span class="sd">        The label to assign when the top two scores are too similar. Defaults to &#39;Unassigned&#39;.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+<span class="sd">        The function directly modifies the `data` object by adding classification labels to `data.obs`.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The function calculates signature scores using the `score_all_signatures` function. The highest score is used for</span>
+<span class="sd">    classification unless it is within the `similarity_threshold` of the second-highest score.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; data = sc.read_h5ad(&#39;path/to/your/data.h5ad&#39;)  # Assume sc is Scanpy and data is loaded</span>
+<span class="sd">    &gt;&gt;&gt; signatures_input = &#39;path/to/signatures.txt&#39;</span>
+<span class="sd">    &gt;&gt;&gt; CIA_classify(data, signatures_input, similarity_threshold=0.1)</span>
+<span class="sd">    &gt;&gt;&gt; data.obs[&#39;CIA prediction&#39;]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">start_time</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">scores_df</span> <span class="o">=</span> <span class="n">score_all_signatures</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">signatures_input</span><span class="p">,</span> <span class="n">score_mode</span><span class="o">=</span><span class="n">score_mode</span><span class="p">,</span> <span class="n">return_df</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">n_cpus</span><span class="o">=</span><span class="n">n_cpus</span><span class="p">)</span>
+
+    <span class="c1"># Identify the indices of the highest and second highest scores</span>
+    <span class="n">sorted_scores_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="n">scores_df</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">top_score_idx</span> <span class="o">=</span> <span class="n">sorted_scores_idx</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">second_top_score_idx</span> <span class="o">=</span> <span class="n">sorted_scores_idx</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+    
+    <span class="c1"># Calculate the scores for the highest and second highest scores</span>
+    <span class="n">top_scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">take_along_axis</span><span class="p">(</span><span class="n">scores_df</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">top_score_idx</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    <span class="n">second_top_scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">take_along_axis</span><span class="p">(</span><span class="n">scores_df</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">second_top_score_idx</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    
+    <span class="c1"># Determine if the top score is too similar to the second top score</span>
+    <span class="n">score_difference</span> <span class="o">=</span> <span class="n">top_scores</span> <span class="o">-</span> <span class="n">second_top_scores</span>
+    <span class="n">too_similar</span> <span class="o">=</span> <span class="n">score_difference</span> <span class="o">&lt;=</span> <span class="n">similarity_threshold</span>
+    
+    <span class="c1"># Generate labels based on the highest score, assign &#39;Unassigned&#39; if scores are too similar</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">scores_df</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">sim</span> <span class="k">else</span> <span class="n">unassigned_label</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sim</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">top_score_idx</span><span class="p">,</span> <span class="n">too_similar</span><span class="p">)]</span>
+    
+    <span class="c1"># Update the data object with new labels</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="n">label_column</span><span class="p">]</span> <span class="o">=</span> <span class="n">labels</span>
+
+  
+    <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>  <span class="c1"># Capture end time</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Classification complete! Start time: </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%H:%M:%S&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">time</span><span class="o">.</span><span class="n">gmtime</span><span class="p">(</span><span class="n">start_time</span><span class="p">))</span><span class="si">}</span><span class="s1">, &#39;</span>
+          <span class="sa">f</span><span class="s1">&#39;End time: </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%H:%M:%S&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">time</span><span class="o">.</span><span class="n">gmtime</span><span class="p">(</span><span class="n">end_time</span><span class="p">))</span><span class="si">}</span><span class="s1">, &#39;</span>
+          <span class="sa">f</span><span class="s1">&#39;Results stored in AnnData.obs[&quot;</span><span class="si">{</span><span class="n">label_column</span><span class="si">}</span><span class="s1">&quot;]&#39;</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, National Institue of Molecular Genetics (INGM).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,9 +1,6 @@
 cia package
 ===========
 
-Submodules
-----------
-
 cia.external module
 -------------------
 
@@ -32,14 +29,6 @@ cia.utils module
 ----------------
 
 .. automodule:: cia.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: cia
    :members:
    :undoc-members:
    :show-inheritance:

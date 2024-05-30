@@ -27,7 +27,7 @@ sys.path.insert(0, os.path.join(__location__, "../src"))
 # DON'T FORGET: Check the box "Install your project inside a virtualenv using
 # setup.py install" in the RTD Advanced Settings.
 # Additionally it helps us to avoid running apidoc manually
-
+'''
 try:  # for Sphinx >= 1.7
     from sphinx.ext import apidoc
 except ImportError:
@@ -53,7 +53,7 @@ try:
     apidoc.main(args)
 except Exception as e:
     print("Running `sphinx-apidoc` failed!\n{}".format(e))
-
+'''
 # -- General configuration ---------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -72,7 +72,12 @@ extensions = [
     "sphinx.ext.ifconfig",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
+#    "myst_nb"
+    "nbsphinx"
 ]
+
+# Specific option for nbsphinx
+nbsphinx_allow_errors = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -175,7 +180,7 @@ html_theme_options = {
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-# html_logo = ""
+html_logo = "logo.png"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32

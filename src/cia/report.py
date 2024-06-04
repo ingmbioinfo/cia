@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import matplotlib.pyplot as plt
 import itertools 
 import scipy
 import os
@@ -276,3 +277,55 @@ def grouped_classification_metrics(data, classification_obs, ref_obs, unassigned
     if sum(report_df['%UN'])==0:
         del report_df['%UN']
     return report_df
+    
+def plot_group_composition(df, ref_col, comp_col, plot_type='percentage', palette='Set3', show_legend=True):
+    """
+    Plot the composition of each reference group as a horizontal stacked bar plot.
+    The composition can be shown either as raw counts or as percentages.
+
+    Parameters:
+    - df: DataFrame containing the data to be plotted.
+    - ref_col: str, the name of the column representing the reference grouping variable.
+    - comp_col: str, the name of the column representing the grouping to be compared.
+    - plot_type: str, indicates whether to plot 'percentage' or 'raw' counts. Defaults to 'percentage'.
+    - palette: str or list, the color palette to use. Defaults to 'Set3'.
+    - show_legend: bool, whether to display the legend on the plot. Defaults to True.
+    """
+    
+    # Check if specified columns exist in the DataFrame
+    if not {ref_col, comp_col}.issubset(df.columns):
+        raise ValueError("Specified columns are not in the DataFrame")
+
+    # Create a contingency table of counts
+    contingency_table = pd.crosstab(df[ref_col], df[comp_col], dropna=False)
+    
+    # Ensure all groups are represented, even with zero counts
+    all_groups = list(contingency_table.columns)
+
+    # Calculate percentages if required
+    if plot_type == 'percentage':
+        contingency_table = contingency_table.div(contingency_table.sum(axis=1), axis=0) * 100
+
+    # Set up the color palette
+    colors = sns.color_palette(palette, n_colors=len(all_groups))
+
+    # Plotting
+    fig, ax = plt.subplots(figsize=(10, 6))
+    bottom = None
+    for i, group in enumerate(all_groups):
+        values = contingency_table[group].values
+        ax.barh(contingency_table.index, values, left=bottom, label=group, color=colors[i])
+        if bottom is None:
+            bottom = values
+        else:
+            bottom += values
+
+    ax.set_xlabel('Percentage' if plot_type == 'percentage' else 'Count')
+    ax.set_ylabel(ref_col)
+    ax.set_title('Group Composition by ' + ref_col)
+
+    if show_legend:
+        ax.legend(title=comp_col, bbox_to_anchor=(1.05, 1), loc='upper left')
+
+    plt.show()
+

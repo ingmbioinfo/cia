@@ -2,9 +2,9 @@
 Changelog
 =========
 
-Version 0.1
+Version 1.0.0a1
 ===========
 
-- Feature A added
-- FIX: nasty bug #1729 fixed
-- add your changes here!
+- gene_singature and fastmode classification
+- added template documentation for readthedocs
+- removed pval and qval mode

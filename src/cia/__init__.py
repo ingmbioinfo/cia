@@ -11,7 +11,7 @@ try:
     dist_name = "CIA"
     __version__ = version(dist_name)
 except PackageNotFoundError:  # pragma: no cover
-    __version__ = "unknown"
+    __version__ = "1.0.0a1"
 finally:
     del version, PackageNotFoundError
     

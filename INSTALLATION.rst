@@ -2,10 +2,20 @@
 Installation
 ============
 
-Package is available only on github. To install it locally, run the following commands:
+``cia`` package could be installed using pip:
 
-``git clone https://github.com/ingmbioinfo/cia.git``
+.. code-block:: shell
+	:linenos:
 
-``cd cia``
+	pip install cia
 
-``pip install -e .``
+To install the github developing version run the following commands:
+
+.. code-block:: shell
+	:linenos:	
+
+	git clone https://github.com/ingmbioinfo/cia.git
+
+	cd cia
+
+	pip install -e .

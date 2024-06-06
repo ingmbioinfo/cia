@@ -7,4 +7,3 @@ Contributors
 * Francesca Vincenti <vincenti@ingm.org>
 * Andrea Gobbini <gobbini@ingm.org>
 * Eugenia Galeota <galeota@ingm.org>
-* Jole Costanza

@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: CIA
-Version: 0.0.post1.dev12+g0e070d6.d20240419
+Version: 0.0.post1.dev15+g220978f
 Summary: Add a short description here!
 Home-page: https://github.com/pyscaffold/pyscaffold/
 Author: Ivan Ferrari
@@ -46,12 +46,6 @@ Requires-Dist: pytest-cov; extra == "testing"
     :alt: Project generated with PyScaffold
     :target: https://pyscaffold.org/
 
-.. image:: docs/logo.png
-   :width: 200
-   :align: center 
-
-|
-
 ===
 CIA
 ===
@@ -61,17 +55,3 @@ CIA
 
 
 Given a collection of signatures, CIA synthesizes the information of each signature expression in a single score value for each cell. Comparing the score values, the package assigns labels to each cell accordingly with the top scored signature. This classifier allows the use of different modes, depending on whether the user prefers a faster analysis (useful to get an initial idea about the clustering parameters to choose) or a more statistically accurate analysis; in the second case, CIA exploits the comparison of the obtained signature scores with randomic signature scores, with the possibility to filter the scores by their distribution or their significance, and allowing the comparison of genesets with lengths spanning from tens to thousands genes.
-
-
-============
-Installation
-============
-
-Package is available only on github. To install it locally, run the following commands:
-
-``git clone https://github.com/ingmbioinfo/cia.git``
-
-``cd cia``
-
-``pip install -e .``
-

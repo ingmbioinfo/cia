@@ -284,12 +284,22 @@ def plot_group_composition(df, ref_col, comp_col, plot_type='percentage', palett
     The composition can be shown either as raw counts or as percentages.
 
     Parameters:
-    - df: DataFrame containing the data to be plotted.
-    - ref_col: str, the name of the column representing the reference grouping variable.
-    - comp_col: str, the name of the column representing the grouping to be compared.
-    - plot_type: str, indicates whether to plot 'percentage' or 'raw' counts. Defaults to 'percentage'.
-    - palette: str or list, the color palette to use. Defaults to 'Set3'.
-    - show_legend: bool, whether to display the legend on the plot. Defaults to True.
+    df : pandas.DataFrame
+        DataFrame containing the data to be plotted.
+    ref_col : str 
+        the name of the column representing the reference grouping variable.
+    comp_col: str
+        the name of the column representing the grouping to be compared.
+    plot_type : str
+        indicates whether to plot 'percentage' or 'raw' counts. Defaults to 'percentage'.
+    palette : str or list 
+        the color palette to use. Defaults to 'Set3'.
+    show_legend : bool
+        whether to display the legend on the plot. Defaults to True.
+    
+    Returns
+    -------
+    AxesSubplot
     """
     
     # Check if specified columns exist in the DataFrame

@@ -44,5 +44,5 @@ jobs:
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
-          permissions:
-            id-token: write
+    permissions:
+      id-token: write

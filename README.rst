@@ -41,11 +41,12 @@ Please read the (documentation)[] and (tutorial)[]
 --------
 Citation
 --------
-If you use `cia` in your work, please cite our publication as follows: 
-
-.. note::
+If you use ``cia`` in your work, please cite our publication as follows: 
 
 	CIA: a Cluster Independent Annotation method to investigate cell identities in scRNA-seq data
+	
 	Ivan Ferrari, Mattia Battistella, Francesca Vincenti, Andrea Gobbini, Samuele Notarbartolo, 
 	Jole Costanza, Stefano Biffo, Renata Grifantini, Sergio Abrignani, Eugenia Galeota
+	
 	bioRxiv 2023.11.30.569382; doi: (10.1101/2023.11.30.569382)[https://doi.org/10.1101/2023.11.30.569382]
+

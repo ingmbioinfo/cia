@@ -10,10 +10,18 @@ try:
     # Change here if project is renamed and does not equal the package name
     dist_name = "CIA"
     __version__ = version(dist_name)
+    
 except PackageNotFoundError:  # pragma: no cover
-    __version__ = "1.0.0a1"
+    __version__ = ""
 finally:
     del version, PackageNotFoundError
+
+# add to solve versioning issues
+try:
+    from ._version import version as __version__
+except ImportError:
+    __version__ = "v1.0.0a1"
+
     
 import seaborn as sns
 import numpy as np

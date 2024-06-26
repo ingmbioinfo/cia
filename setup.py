@@ -15,7 +15,7 @@ if __name__ == "__main__":
 	setup(name='CIA',
 		version='1.0.a1',  # Imposta manualmente la versione qui
     		packages=find_packages(),
-    		#install_requires=[]	
+    		install_requires=['numpy', 'pandas', 'AnnData','scanpy']
 	)
     except:  # noqa
         print(

@@ -6,7 +6,7 @@
     PyScaffold helps you to put up the scaffold of your new Python project.
     Learn more under: https://pyscaffold.org/
 """
-from setuptools import setup
+from setuptools import setup, find_packages
 
 if __name__ == "__main__":
     try:
@@ -15,7 +15,7 @@ if __name__ == "__main__":
         setup(name='CIA',
               version='1.0.a1',  # Imposta manualmente la versione qui
               packages=find_packages(),
-              install_requires=['numpy', 'pandas', 'AnnData','scanpy']
+              #install_requires=['numpy', 'pandas', 'AnnData','scanpy']
         )
     except:  # noqa
         print(

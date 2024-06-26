@@ -10,6 +10,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Recupera la storia completa del repository
 
       - name: Set up Python
         uses: actions/setup-python@v5

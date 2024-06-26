@@ -12,8 +12,8 @@ if __name__ == "__main__":
     try:
         #setup(use_scm_version={"version_scheme": "no-guess-dev"})
         #setup(use_scm_version=True, setup_requires=['setuptools_scm'])#{"version_scheme": "post-release", "local_scheme": "node-and-timestamp"})
-        setup(name='CIA_python',
-              version='1.0.a1',  # Imposta manualmente la versione qui
+        setup(name='ciapy',
+              version='1.0.a2',  # Imposta manualmente la versione qui
               packages=find_packages(),
               #install_requires=['numpy', 'pandas', 'AnnData','scanpy']
         )

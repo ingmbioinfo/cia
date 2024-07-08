@@ -181,6 +181,8 @@ def compute_classification_metrics(data, classification_obs, ref_obs, unassigned
     >>> classification_metrics(adata, ['method1', 'method2'], 'reference', unassigned_label='Unassigned')
     """
     report = {}
+    if type(classification_obs)==str:
+        classification_obs=list(classification_obs)
     
     for m in classification_obs:
         SE, SP, PR, ACC, F1, UN = [], [], [], [], [], []

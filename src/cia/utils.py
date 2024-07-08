@@ -176,6 +176,7 @@ def filter_degs(data, groupby, uns_key='rank_genes_groups', direction='up', logF
         
     return signatures_dict
 
+
 def save_gmt(signatures_dict, file):
     """
     A function to convert a dictionary of signatures in a gmt file correctly formatted for signature_score and signature_based_classification functions.
@@ -188,4 +189,7 @@ def save_gmt(signatures_dict, file):
     file: str
         filepath of gmt file. See pandas.DataFrame.to_csv documentation.  
     """
-    pd.DataFrame.from_dict(signatures_dict, orient='index').to_csv(file, sep='\t', header=None)
+    with open(file, 'w') as f:
+        for key, values in signatures_dict.items():
+            line = key + '\t' + key + '\t' + '\t'.join(values) + '\n'
+            f.write(line)

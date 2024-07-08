@@ -4,7 +4,7 @@ from anndata import AnnData
 import time 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-def load_signatures(signatures_input):
+def load_signatures(signatures_input, description_field_available=True):
     """
     Load gene signatures from a given source.
 
@@ -14,6 +14,8 @@ def load_signatures(signatures_input):
     ----------
     signatures_input : str or dict
         The source of the gene signatures. This can be a path to a tab-separated file, a URL pointing to such a file, or a dictionary where keys are signature names and values are lists of gene names.
+    description_field_available: bool
+        Logical value, to accommodate for the use of "custom" gmt file formats, where the description field might not be provided. Defaults to TRUE.
 
     Returns
     -------
@@ -37,13 +39,29 @@ def load_signatures(signatures_input):
     ['gene1', 'gene2']
     """
     if isinstance(signatures_input, str):
-        df = pd.read_csv(signatures_input, sep='\t', header=None)
-        signatures = {row[0]: row[1:].dropna().tolist() for _, row in df.iterrows()}
+        with open(signatures_input, 'r') as f:
+            lines = f.readlines()
+        
+        signatures = {}
+        for line in lines:
+            fields = line.strip().split('\t')
+            if description_field_available:
+                key = fields[0]
+                description = fields[1]
+                genes = fields[2:]
+            else:
+                key = fields[0]
+                genes = fields[1:]
+            
+            signatures[key] = genes
+            
     elif isinstance(signatures_input, dict):
         signatures = signatures_input
     else:
         raise TypeError("signatures_input must be either a dict or a string path/URL to a GMT file.")
+    
     return signatures
+
 
 def score_signature(data, geneset):
     """

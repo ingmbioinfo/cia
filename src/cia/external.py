@@ -4,69 +4,55 @@ import scanpy as sc
 
 def celltypist_majority_vote(data, classification_obs, groups_obs=None, min_prop=0, unassigned_label='Unassigned'):
     """
-    A function that wraps celltypist majority vote method. It extends the the more represented cell type label (predicted by a given method) to each reference cell groups.
-    If reference cell groups are not provided it exploits scanpy.tl.leiden to over-clustering the dataset (this requires having ran scanpy.pp.neighbors or scanpy.external.pp.bbknn before).
-    
+    A function that wraps Celltypist majority voting (DOI: 10.1126/science.abl5197).
+    Assigns cell group labels based on the majority voting of cell type predictions within each group.
+
+    If no reference cell groups are provided, an over-clustering step is performed using the Leiden algorithm.
+
     Parameters
     ----------
-    
-         
-    data: anndata.AnnData
-        an AnnData object.
-        
-    classification_obs: str or list(str)
-        a string or a list of string specifying the AnnData.obs column/s where the labels assigned by the method/s of interest are stored.
-        
-    groups_obs: str or None
-        a string specifying the AnnData.obs where the labels assigned by the reference method are stored. If None a over-clustering step with leiden algorithm is performed.     
-        
-    min_prop: float
-        for the dominant cell type within a cell group, it represent e minimum proportion of cells required to support naming of the cell group by this cell type.
-        (Default: 0, range: from 0 to 1)
-    
-    unassigned_label: str
-        a string that specifies the label to assign to those cell groups in which none of the cell types reached the minimum proportion. 
-       
-    """
+    data : anndata.AnnData
+        An AnnData object containing the cell data and, optionally, previous clustering results.
+    classification_obs : str or list of str
+        The AnnData.obs column(s) where the cell type predictions (labels) are stored.
+    groups_obs : str, optional
+        The AnnData.obs column where the reference group labels are stored. If None, an over-clustering with the
+        Leiden algorithm is performed based on the dataset size.
+    min_prop : float, optional
+        The minimum proportion of cells required to assign a majority vote label to a group. If the largest
+        cell type in a group doesn't reach this proportion, the group is labeled as 'Unassigned'.
+    unassigned_label : str, optional
+        The label to assign to cell groups where no cell type reaches the minimum proportion. Default is 'Unassigned'.
 
-    if groups_obs==None:
-        if data.n_obs < 5000:
-            resolution = 5
-        elif data.n_obs < 20000:
-            resolution = 10
-        elif data.n_obs < 40000:
-            resolution = 15
-        elif data.n_obs < 100000:
-            resolution = 20
-        elif data.n_obs < 200000:
-            resolution = 25
-        else:
-            resolution = 30
-        print('Reference annotation not selected.')
-        print('Computing over-clustering with leiden algorithm (resolution= '+str(resolution)+') ...') 
-        sc.tl.leiden(data, resolution=resolution, key_added='leiden_'+str(resolution))
-        groups_obs='leiden_'+str(resolution)
-        print('Dataset has been divided into '+str(len(data.obs[groups_obs].cat.categories))+' groups accordingly with trascriptional similarities.')
-        print('')
-        print('Over-clustering result saved in AnnData.obs["'+groups_obs+'"].')
-    else: 
-        print('AnnData.obs["'+groups_obs+'"] selected as reference annotation.')
-    
-    print('Extending the more represented cell type label to each cell group...')
-    print('')    
-    groups=np.array(data.obs[groups_obs])
-    
-    if type(classification_obs)!=list:
-        classification_obs= list(classification_obs)
-    for i in classification_obs:       
-        votes = pd.crosstab(data.obs[i], groups)
-        majority = votes.idxmax(axis=0)
-        freqs = (votes / votes.sum(axis=0).values).max(axis=0)
-        majority[freqs < min_prop] = 'Unassigned'
-        majority = majority[groups].reset_index()
-        majority.index =data.obs[groups_obs].index
-        majority.columns = [groups_obs, 'majority_voting']
-        majority['majority_voting'] = majority['majority_voting'].astype('category')
-        data.obs[i+' majority voting']=majority['majority_voting']
-        print('New classification labels have been stored in AnnData.obs["'+i+' majority voting"]. ')
-        print('')
+    Notes
+    -----
+    The function automatically adjusts the resolution for the Leiden algorithm based on the number of observations in the data.
+    Results of majority voting are stored back in the AnnData.obs, adding a column for each classification considered.
+    """
+    # Determine resolution for Leiden clustering based on data size if groups_obs is not provided
+    if groups_obs is None:
+        resolution = 5 + 5 * (data.n_obs // 20000)  # Increasing resolution in steps based on data size
+        print(f'Reference annotation not selected. Computing over-clustering with Leiden algorithm (resolution={resolution}) ...')
+        sc.tl.leiden(data, resolution=resolution, key_added=f'leiden_{resolution}')
+        groups_obs = f'leiden_{resolution}'
+        print(f'Dataset has been divided into {len(data.obs[groups_obs].cat.categories)} groups according to transcriptional similarities.')
+        print(f'Over-clustering result saved in AnnData.obs["{groups_obs}"].')
+    else:
+        print(f'AnnData.obs["{groups_obs}"] selected as reference annotation.')
+
+    print('Extending the more represented cell type label to each cell group...\n')
+    groups = data.obs[groups_obs]
+
+    # Ensure classification_obs is a list
+    classification_obs = [classification_obs] if isinstance(classification_obs, str) else classification_obs
+
+    for classification in classification_obs:
+        votes = pd.crosstab(data.obs[classification], groups)
+        majority = votes.idxmax()
+        freqs = votes.max() / votes.sum()
+
+        # Apply minimum proportion threshold to assign labels
+        majority_labels = majority.where(freqs >= min_prop, unassigned_label)
+        data.obs[f'{classification}_majority_voting'] = groups.map(majority_labels).astype('category')
+
+        print(f'New classification labels have been stored in AnnData.obs["{classification}_majority_voting"].')

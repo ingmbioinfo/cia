@@ -10,21 +10,25 @@ try:
     # Change here if project is renamed and does not equal the package name
     dist_name = "CIA"
     __version__ = version(dist_name)
+    
 except PackageNotFoundError:  # pragma: no cover
-    __version__ = "unknown"
+    __version__ = ""
 finally:
     del version, PackageNotFoundError
+
+# add to solve versioning issues
+try:
+    from ._version import version as __version__
+except ImportError:
+    __version__ = "v1.0.0a3"
+
     
-import numpy as np
-import anndata
-import pandas as pd
-import scanpy as sc
-import multiprocessing
-from functools import partial
-from scipy.sparse import issparse
-from scipy import sparse
-import time
 import seaborn as sns
+import numpy as np
+import pandas as pd
+from anndata import AnnData
+import time 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from .investigate import *
 from .report import *

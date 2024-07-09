@@ -1,18 +1,18 @@
 Metadata-Version: 2.1
 Name: CIA
-Version: 0.0.post1.dev62+gbf6fc89
-Summary: Add a short description here!
-Home-page: https://github.com/pyscaffold/pyscaffold/
-Author: Ivan Ferrari
+Version: 1.0.0a1.post0+g89bcd4c.d20240607140232
+Summary: Cluster Independent Annotation
+Home-page: https://github.com/ingmbioinfo/cia
+Author: Ivan Ferrari, Mattia Battistella, Francesca Vincenti, Andrea Gobbini, Eugenia Galeota
 Author-email: ferrari@ingm.org
 License: MIT
 Project-URL: Documentation, https://pyscaffold.org/
+Project-URL: Source, https://github.com/ingmbioinfo/cia
 Platform: any
 Classifier: Development Status :: 4 - Beta
 Classifier: Programming Language :: Python
 Description-Content-Type: text/x-rst; charset=UTF-8
 License-File: LICENSE.txt
-Requires-Dist: importlib-metadata; python_version < "3.8"
 Provides-Extra: testing
 Requires-Dist: setuptools; extra == "testing"
 Requires-Dist: pytest; extra == "testing"
@@ -47,27 +47,26 @@ Requires-Dist: pytest-cov; extra == "testing"
     :alt: Project generated with PyScaffold
     :target: https://pyscaffold.org/
 
-.. image:: docs/logo.png
-   :width: 200
-   :align: center 
-
-|
-
 ===
 CIA
 ===
 
 
-     CIA (Cluster Independent Annotation) is a new computational tool that enables a highly accurate automatic classification of cells in scRNA-seq datasets exploiting gene signatures.
-
+CIA (Cluster Independent Annotation) is a new computational tool that enables a highly accurate automatic classification of cells in scRNA-seq datasets exploiting gene signatures.
 
 Given a collection of signatures, CIA synthesizes the information of each signature expression in a single score value for each cell. Comparing the score values, the package assigns labels to each cell accordingly with the top scored signature. This classifier allows the use of different modes, depending on whether the user prefers a faster analysis (useful to get an initial idea about the clustering parameters to choose) or a more statistically accurate analysis; in the second case, CIA exploits the comparison of the obtained signature scores with randomic signature scores, with the possibility to filter the scores by their distribution or their significance, and allowing the comparison of genesets with lengths spanning from tens to thousands genes.
 
+Please read the (documentation)[] and (tutorial)[]
 
-.. _pyscaffold-notes:
+--------
+Citation
+--------
+If you use ``cia`` in your work, please cite our publication as follows: 
 
-Note
-====
+	CIA: a Cluster Independent Annotation method to investigate cell identities in scRNA-seq data
+	
+	Ivan Ferrari, Mattia Battistella, Francesca Vincenti, Andrea Gobbini, Samuele Notarbartolo, 
+	Jole Costanza, Stefano Biffo, Renata Grifantini, Sergio Abrignani, Eugenia Galeota
+	
+	bioRxiv 2023.11.30.569382; doi: (10.1101/2023.11.30.569382)[https://doi.org/10.1101/2023.11.30.569382]
 
-This project has been set up using PyScaffold 4.2.1. For details and usage
-information on PyScaffold see https://pyscaffold.org/.

@@ -43,7 +43,7 @@ def signatures_similarity(signatures_dict, show='J'):
     similarity_matrix = np.zeros((n, n))
 
     for i in range(n):
-        for j in range(i, n):
+        for j in range(n):
             intersec = len(np.intersect1d(signatures_dict[signature_names[i]], signatures_dict[signature_names[j]]))
             if show == 'J':
                 union = len(np.union1d(signatures_dict[signature_names[i]], signatures_dict[signature_names[j]]))
@@ -51,8 +51,6 @@ def signatures_similarity(signatures_dict, show='J'):
             elif show == '%':
                 similarity = round(100 * intersec / len(signatures_dict[signature_names[i]]), 2)
             
-            similarity_matrix[i, j] = similarity_matrix[j, i] = similarity
-
     similarity = pd.DataFrame(similarity_matrix, index=signature_names, columns=signature_names)
     return similarity
 

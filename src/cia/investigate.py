@@ -44,7 +44,7 @@ def load_signatures(signatures_input, description_field_available=True):
         
         signatures = {}
         for line in lines:
-            fields = line.strip().split('\t')
+            fields = line.strip().split('\t')  # Split by tab character
             if description_field_available:
                 key = fields[0]
                 description = fields[1]
@@ -61,7 +61,6 @@ def load_signatures(signatures_input, description_field_available=True):
         raise TypeError("signatures_input must be either a dict or a string path/URL to a GMT file.")
     
     return signatures
-
 
 def score_signature(data, geneset):
     """

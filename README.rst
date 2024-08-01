@@ -27,14 +27,12 @@ Documentation
 - **Python Tutorial**: `CIA Python Tutorial <https://cia-python.readthedocs.io/en/latest/tutorial/Cluster_Independent_Annotation.html>`_
 - **R Package and Tutorial**: `CIA R GitHub Repository <https://github.com/ingmbioinfo/cia/tree/master/tutorial>`_
 
+.. include:: INSTALLATION.rst
+
+
 Citation
 --------
 
 If you use CIA in your work, please cite our publication as follows:
 
 Ferrari I, Battistella M, Vincenti F, Gobbini A, Notarbartolo S, Costanza J, Biffo S, Grifantini R, Abrignani S, Galeota E. (2023). "CIA: a Cluster Independent Annotation method to investigate cell identities in scRNA-seq data". bioRxiv. doi: `10.1101/2023.11.30.569382 <https://doi.org/10.1101/2023.11.30.569382>`_.
-
-Abstract
---------
-
-Single-cell RNA sequencing (scRNA-seq) has revolutionized the exploration of transcriptional landscapes in complex tissues. Identifying and classifying cells from scRNA-seq datasets is challenging. CIA addresses this by accurately identifying cell types using predefined signatures. Our results show that CIA outperforms other state-of-the-art methods while being computationally efficient. CIA simplifies the process of obtaining reproducible signature-based cell assignments, making it a powerful tool for exploring the transcriptional landscape of single cells.

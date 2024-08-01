@@ -3,7 +3,7 @@ CIA (Cluster Independent Annotation)
 
 CIA (Cluster Independent Annotation) is a cutting-edge computational tool designed to accurately classify cells in scRNA-seq datasets using gene signatures. This tool operates without the need for a fully annotated reference dataset or complex machine learning processes, providing a highly user-friendly and practical solution for cell type annotation.
 
-Overview
+Description
 --------
 
 CIA synthesizes the information of each signature expression into a single score value for each cell. By comparing these score values, CIA assigns labels to each cell based on the top-scored signature. CIA can filter scores by their distribution or significance, allowing comparison of genesets with lengths spanning tens to thousands of genes.
@@ -29,8 +29,24 @@ Documentation
 
 Installation
 ------------------------------
+``cia`` package could be installed using pip:
 
-.. include:: INSTALLATION.rst
+.. code-block:: shell
+	:linenos:
+
+	pip install cia
+
+To install the github developing version run the following commands:
+
+.. code-block:: shell
+	:linenos:	
+
+	git clone https://github.com/ingmbioinfo/cia.git
+
+	cd cia
+
+	pip install -e .
+
 
 
 Citation

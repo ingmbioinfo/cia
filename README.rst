@@ -1,52 +1,40 @@
-.. These are examples of badges you might want to add to your README:
-   please update the URLs accordingly
+CIA (Cluster Independent Annotation)
+====================================
 
-    .. image:: https://api.cirrus-ci.com/github/<USER>/CIA.svg?branch=main
-        :alt: Built Status
-        :target: https://cirrus-ci.com/github/<USER>/CIA
-    .. image:: https://readthedocs.org/projects/CIA/badge/?version=latest
-        :alt: ReadTheDocs
-        :target: https://CIA.readthedocs.io/en/stable/
-    .. image:: https://img.shields.io/coveralls/github/<USER>/CIA/main.svg
-        :alt: Coveralls
-        :target: https://coveralls.io/r/<USER>/CIA
-    .. image:: https://img.shields.io/pypi/v/CIA.svg
-        :alt: PyPI-Server
-        :target: https://pypi.org/project/CIA/
-    .. image:: https://img.shields.io/conda/vn/conda-forge/CIA.svg
-        :alt: Conda-Forge
-        :target: https://anaconda.org/conda-forge/CIA
-    .. image:: https://pepy.tech/badge/CIA/month
-        :alt: Monthly Downloads
-        :target: https://pepy.tech/project/CIA
-    .. image:: https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Twitter
-        :alt: Twitter
-        :target: https://twitter.com/CIA
+CIA (Cluster Independent Annotation) is a cutting-edge computational tool designed to accurately classify cells in scRNA-seq datasets using gene signatures. This tool operates without the need for a fully annotated reference dataset or complex machine learning processes, providing a highly user-friendly and practical solution for cell type annotation.
 
-.. image:: https://img.shields.io/badge/-PyScaffold-005CA0?logo=pyscaffold
-    :alt: Project generated with PyScaffold
-    :target: https://pyscaffold.org/
-
-===
-CIA
-===
-
-
-CIA (Cluster Independent Annotation) is a new computational tool that enables a highly accurate automatic classification of cells in scRNA-seq datasets exploiting gene signatures.
-
-Given a collection of signatures, CIA synthesizes the information of each signature expression in a single score value for each cell. Comparing the score values, the package assigns labels to each cell accordingly with the top scored signature. This classifier allows the use of different modes, depending on whether the user prefers a faster analysis (useful to get an initial idea about the clustering parameters to choose) or a more statistically accurate analysis; in the second case, CIA exploits the comparison of the obtained signature scores with randomic signature scores, with the possibility to filter the scores by their distribution or their significance, and allowing the comparison of genesets with lengths spanning from tens to thousands genes.
-
-Please read the (documentation)[] and (tutorial)[]
-
+Overview
 --------
+
+CIA synthesizes the information of each signature expression into a single score value for each cell. By comparing these score values, CIA assigns labels to each cell based on the top-scored signature. CIA can filter scores by their distribution or significance, allowing comparison of genesets with lengths spanning tens to thousands of genes.
+
+CIA is implemented in both R and Python, making it compatible with all major single-cell analysis tools like SingleCellExperiment, Seurat, and Scanpy. This dual compatibility ensures seamless integration into existing workflows.
+
+Key Features
+------------
+
+- **Automatic Annotation**: Accurately labels cell types in scRNA-seq datasets based on gene signatures.
+- **Clustering-Free**: Operates independently of clustering steps, enabling flexible and rapid data exploration.
+- **Multi-Language Support**: Available in both R and Python to suit diverse user preferences.
+- **Compatibility**: Integrates with popular single-cell data formats (AnnData, SingleCellExperiment, SeuratObject).
+- **Statistical Analysis**: Offers functions for evaluating the quality of signatures and classification performance.
+- **Documentation and Tutorials**: Comprehensive guides to facilitate easy adoption and integration into existing workflows.
+
+Documentation
+------------------------------
+
+- **Python Package**: `CIA Python <https://pypi.org/project/cia-python/>`_
+- **Python Tutorial**: `CIA Python Tutorial <https://cia-python.readthedocs.io/en/latest/tutorial/Cluster_Independent_Annotation.html>`_
+- **R Package and Tutorial**: `CIA R GitHub Repository <https://github.com/ingmbioinfo/cia/tree/master/tutorial>`_
+
 Citation
 --------
-If you use ``cia`` in your work, please cite our publication as follows: 
 
-	CIA: a Cluster Independent Annotation method to investigate cell identities in scRNA-seq data
-	
-	Ivan Ferrari, Mattia Battistella, Francesca Vincenti, Andrea Gobbini, Samuele Notarbartolo, 
-	Jole Costanza, Stefano Biffo, Renata Grifantini, Sergio Abrignani, Eugenia Galeota
-	
-	bioRxiv 2023.11.30.569382; doi: (10.1101/2023.11.30.569382)[https://doi.org/10.1101/2023.11.30.569382]
+If you use CIA in your work, please cite our publication as follows:
 
+Ferrari I, Battistella M, Vincenti F, Gobbini A, Notarbartolo S, Costanza J, Biffo S, Grifantini R, Abrignani S, Galeota E. (2023). "CIA: a Cluster Independent Annotation method to investigate cell identities in scRNA-seq data". bioRxiv. doi: `10.1101/2023.11.30.569382 <https://doi.org/10.1101/2023.11.30.569382>`_.
+
+Abstract
+--------
+
+Single-cell RNA sequencing (scRNA-seq) has revolutionized the exploration of transcriptional landscapes in complex tissues. Identifying and classifying cells from scRNA-seq datasets is challenging. CIA addresses this by accurately identifying cell types using predefined signatures. Our results show that CIA outperforms other state-of-the-art methods while being computationally efficient. CIA simplifies the process of obtaining reproducible signature-based cell assignments, making it a powerful tool for exploring the transcriptional landscape of single cells.

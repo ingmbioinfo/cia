@@ -1,3 +1,8 @@
+.. image:: docs/logo.png
+   :align: right
+   :alt: 
+   :width: 120
+
 CIA (Cluster Independent Annotation)
 ====================================
 

@@ -24,7 +24,7 @@ Documentation
 ------------------------------
 
 - **Python Package**: `CIA Python <https://pypi.org/project/cia-python/>`_
-- **Python Tutorial**: `CIA Python Tutorial <https://cia-python.readthedocs.io/en/latest/tutorial/Cluster_Independent_Annotation.html>`_
+- **Python docs**: `CIA Python documentation <https://cia-python.readthedocs.io/en/latest/index.html>`_
 - **R Package and Tutorial**: `CIA R GitHub Repository <https://github.com/ingmbioinfo/cia/tree/master/tutorial>`_
 
 Installation

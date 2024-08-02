@@ -294,3 +294,6 @@ intersphinx_mapping = {
 }
 
 print(f"loading configurations for {project} {version} ...", file=sys.stderr)
+
+# Mock dependency for RTD modules section building
+autodoc_mock_imports = ['numpy']

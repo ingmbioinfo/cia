@@ -6,3 +6,7 @@ ipykernel
 nbsphinx
 sphinx_rtd_theme
 seaborn
+anndata
+numpy
+pandas
+scanpy

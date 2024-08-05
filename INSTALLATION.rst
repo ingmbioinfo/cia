@@ -7,7 +7,7 @@ Installation
 .. code-block:: shell
 	:linenos:
 
-	pip install cia
+	pip install cia-python
 
 To install the github developing version run the following commands:
 

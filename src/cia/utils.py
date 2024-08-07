@@ -3,7 +3,7 @@ import pandas as pd
 import itertools 
 import scipy
 
-ef signatures_similarity(signatures_dict, show='J'):
+def signatures_similarity(signatures_dict, show='J'):
     """
     Computes the similarity between gene signatures.
 

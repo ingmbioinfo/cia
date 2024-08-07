@@ -2,6 +2,10 @@
 Changelog
 =========
 
+Version 1.0.0a4
+===============
+- Updated documentation
+
 Version 1.0.0a1
 ===============
 

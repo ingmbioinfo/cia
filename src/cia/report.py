@@ -85,8 +85,9 @@ def grouped_distributions(data, columns_obs, ref_obs, cmap='Reds', scale_medians
         If `save` is provided, the heatmap is saved and None is returned. Otherwise, returns the AxesSubplot object.
     """
 
-    grouped_df=data.obs.groupby(ref_obs).median()
-    grouped_df=grouped_df[columns_obs]
+    # grouped_df=data.obs.groupby(ref_obs).median()
+    # grouped_df=grouped_df[columns_obs]
+    grouped_df = data.obs.groupby(ref_obs, observed=False)[columns_obs].median()
     if scale_medians!=None:
         if scale_medians=='row-wise':
             grouped_df=grouped_df.transpose()/np.array(grouped_df.sum(axis=1))

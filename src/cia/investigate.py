@@ -90,7 +90,7 @@ def score_signature(data, geneset):
     >>> import scanpy as sc
     >>> adata = sc.datasets.pbmc68k_reduced()
     >>> geneset = ['CD3D', 'CD3E', 'CD3G', 'CD4', 'CD8A', 'CD8B']
-    >>> scores = compute_signature_scores(adata, geneset)
+    >>> scores = score_signature(adata, geneset)
     >>> print(scores.shape)
     (700,)
 

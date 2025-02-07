@@ -15,7 +15,7 @@ if __name__ == "__main__":
         setup(name='cia_python',
               version='1.0.a4',  # manually set the version here
               packages=find_packages(),
-              install_requires=['seaborn', 'numpy', 'pandas', 'AnnData','scanpy']
+              install_requires=['seaborn', 'numpy', 'pandas', 'AnnData','scanpy', 'igraph', 'leidenalg']
         )
     except:  # noqa
         print(

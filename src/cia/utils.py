@@ -2,6 +2,46 @@ import numpy as np
 import pandas as pd
 import itertools 
 import scipy
+# added for read_gmt_from_url
+import requests # to be installed with pip or defined in the requirements
+import io
+
+def _fetch_url_gmt(url: str) -> dict:
+    """Fetches a GMT file from a URL and parses it into a dictionary.
+
+    Parameters
+    ----------
+    url : str
+        The URL of the GMT file.
+
+    Returns
+    -------
+    dict
+        A dictionary where keys are gene set names and values are lists of associated genes.
+
+    Raises
+    ------
+    ValueError
+        If the request to fetch the GMT file fails.
+    """
+    response = requests.get(url)
+    
+    if response.status_code != 200:
+        raise ValueError(f"Failed to fetch GMT file. HTTP Status Code: {response.status_code}")
+
+    gene_sets = {}
+    file_content = io.StringIO(response.text)
+
+    for line in file_content:
+        data = line.strip().split("\t")
+        if len(data) < 3:
+            continue  # Skip lines that don't have enough data
+        gene_set_name = data[0]  # First column = set name
+        genes = data[2:]  # Skip the second column (description) and take the genes
+        gene_sets[gene_set_name] = genes
+
+    return gene_sets
+
 
 def signatures_similarity(signatures_dict, show='J'):
     """

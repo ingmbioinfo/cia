@@ -3,6 +3,10 @@ import pandas as pd
 from anndata import AnnData
 import time 
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import requests #added to manage urls
+import os
+from .utils import _fetch_url_gmt
+from urllib.parse import urlparse
 
 def load_signatures(signatures_input, description_field_available=True):
     """
@@ -38,6 +42,45 @@ def load_signatures(signatures_input, description_field_available=True):
     >>> print(signatures['signature1'])
     ['gene1', 'gene2']
     """
+
+    # Check if it's a dictionary
+    if isinstance(signatures_input, dict):
+        signatures = signatures_input
+
+    # Check if it's a valid file path
+    elif isinstance(signatures_input, str) and os.path.exists(signatures_input):
+        with open(signatures_input, 'r') as f:
+            lines = f.readlines()
+        
+        signatures = {}
+        for line in lines:
+            fields = line.strip().split('\t')  # Split by tab character
+            if description_field_available:
+                key = fields[0]
+                description = fields[1]
+                genes = fields[2:]
+            else:
+                key = fields[0]
+                genes = fields[1:]
+            
+            signatures[key] = genes
+
+    # Check if it's a valid URL
+    elif isinstance(signatures_input, str):
+        parsed = urlparse(signatures_input)
+        if parsed.scheme in {"http", "https"} and parsed.netloc:
+            try:
+                response = requests.head(signatures_input, allow_redirects=True, timeout=5)
+                if response.status_code == 200:
+                    signatures = _fetch_url_gmt(signatures_input)
+            except requests.RequestException:
+                raise TypeError("signatures_input must be either a dict or a string path/URL to a GMT file.")
+
+    return signatures
+
+
+
+"""     
     if isinstance(signatures_input, str):
         with open(signatures_input, 'r') as f:
             lines = f.readlines()
@@ -60,7 +103,7 @@ def load_signatures(signatures_input, description_field_available=True):
     else:
         raise TypeError("signatures_input must be either a dict or a string path/URL to a GMT file.")
     
-    return signatures
+    return signatures """
 
 def score_signature(data, geneset):
     """
@@ -99,6 +142,9 @@ def score_signature(data, geneset):
     AttributeError
         If `data` does not have the required `raw` attribute or if `raw` does not have the `X` and `var_names` attributes.
     """
+    if isinstance(geneset, str):
+        geneset = load_signatures(geneset) # something like that should be require for be universal
+        geneset = list(geneset.values())[0]
     geneset = np.intersect1d(geneset, data.raw.var_names)
     if len(geneset) == 0:
         return np.zeros(data.shape[0])
@@ -151,7 +197,8 @@ def score_all_signatures(data, signatures_input, score_mode='raw', return_df=Fal
     >>> signature_scores = signature_score(data, signatures_input, score_mode='scaled', return_df=True)
     >>> signature_scores.head()
     """
-    signatures = load_signatures(signatures_input)
+    signatures = load_signatures(signatures_input) # incompatible with the bug-fix from url and score_signature
+    #signatures = signatures_input
     print('Checking if genes are in AnnData.var_names...\n')
     signatures_summary = [f"{sig}: {len(np.intersect1d(genes, data.raw.var_names))}/{len(genes)}"
                       for sig, genes in signatures.items()]

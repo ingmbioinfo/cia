@@ -20,7 +20,7 @@ finally:
 try:
     from ._version import version as __version__
 except ImportError:
-    __version__ = "v1.0.0a4"
+    __version__ = "v1.0.0a5"
 
     
 import seaborn as sns

@@ -13,7 +13,7 @@ if __name__ == "__main__":
         #setup(use_scm_version={"version_scheme": "no-guess-dev"})
         #setup(use_scm_version=True, setup_requires=['setuptools_scm'])#{"version_scheme": "post-release", "local_scheme": "node-and-timestamp"})
         setup(name='cia_python',
-              version='1.0.a4',  # manually set the version here
+              version='1.0.a5',  # manually set the version here
               packages=find_packages(),
               install_requires=['seaborn', 'numpy', 'pandas', 'AnnData','scanpy', 'igraph', 'leidenalg']
         )

@@ -47,7 +47,7 @@ Issue Reports
 =============
 
 If you experience bugs or general issues with ``CIA``, please have a look
-on the `issue tracker`_. If you don't see anything useful there, please feel
+on the `issues page`[https://github.com/ingmbioinfo/cia/issues] . If you don't see anything useful there, please feel
 free to fire an issue report.
 
 .. tip::
@@ -224,6 +224,17 @@ Submit your contribution
       the PR as a draft first and mark it as ready for review after the feedbacks
       from the continuous integration (CI) system or any required fixes.
 
+Versioning
+---------------
+To update the pypi package distribution CI require update of the version number. Version number must be updated into the following files:
+
+#. setup.py
+
+#. setup.cfg
+
+#. src/cia/__init__.py
+
+#. CHANGELOG.rst
 
 Troubleshooting
 ---------------

@@ -1,6 +1,9 @@
 =========
 Changelog
 =========
+Version 1.0.0a6
+===============
+- fixed missing similarity matrix assignment in utils.py
 
 Version 1.0.0a5
 ===============

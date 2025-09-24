@@ -90,7 +90,7 @@ def signatures_similarity(signatures_dict, show='J'):
                 similarity = intersec / union
             elif show == '%':
                 similarity = round(100 * intersec / len(signatures_dict[signature_names[i]]), 2)
-            
+            similarity_matrix[i, j] = similarity_matrix[j, i] = similarity    
     similarity = pd.DataFrame(similarity_matrix, index=signature_names, columns=signature_names)
     return similarity
 

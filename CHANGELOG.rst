@@ -2,6 +2,10 @@
 Changelog
 =========
 
+Version 1.0.0a8
+===============
+- inserted requests into requirements
+
 Version 1.0.0a7
 ===============
 - fixed missing similarity matrix assignment in utils.py

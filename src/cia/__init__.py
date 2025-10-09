@@ -20,14 +20,14 @@ finally:
 try:
     from ._version import version as __version__
 except ImportError:
-    __version__ = "v1.0.0a7"
+    __version__ = "v1.0.0a8"
 
     
 import seaborn as sns
 import numpy as np
 import pandas as pd
 from anndata import AnnData
-import time 
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from .investigate import *

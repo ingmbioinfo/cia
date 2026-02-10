@@ -57,4 +57,4 @@ Citation
 
 If you use CIA in your work, please cite our publication as follows:
 
-Ferrari I, Battistella M, Vincenti F, Gobbini A, Notarbartolo S, Costanza J, Biffo S, Grifantini R, Abrignani S, Galeota E. (2023). "CIA: a Cluster Independent Annotation method to investigate cell identities in scRNA-seq data". bioRxiv. doi: `10.1101/2023.11.30.569382 <https://doi.org/10.1101/2023.11.30.569382>`_.
+Ferrari, I., Battistella, M., Vincenti, F. et al. CIA: unveiling cellular identities with cluster-independent annotation in single-cell RNA sequencing data for comprehensive cell type characterization and exploration. BMC Bioinformatics 27, 38 (2026). DOI: `10.1186/s12859-025-06320-z <https://doi.org/10.1186/s12859-025-06320-z>`_.

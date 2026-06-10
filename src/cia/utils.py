@@ -628,7 +628,7 @@ def retrieve_optimal_markers(
 
 
 def save_gmt(signatures_dict, file):
-        """
+    """
     A function to convert a dictionary of signatures in a gmt file correctly formatted for signature_score and signature_based_classification functions.
     
     Parameters

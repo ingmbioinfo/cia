@@ -267,10 +267,42 @@ def filter_degs(
 
 
 def _cia_exact_scores_matrix(adata, genes):
-    raw = adata.raw
+    """
+    Compute cumulative CIA exact scores for a set of genes.
 
-    X = raw[:, genes].X
-    total_expr = raw.X.sum(axis=1)
+    For each cell (rows) and for each prefix of the provided `genes` list (columns),
+    this function computes a cumulative count of expressed genes and the cumulative
+    expression, then combines them into a raw CIA score which is scaled per column.
+
+    Parameters
+    ----------
+    adata : AnnData
+        Annotated data object. The function expects expression data to be available
+        in `adata.raw`.
+    genes : list-like
+        Sequence of gene names (order matters). The returned matrix has as many
+        columns as the length of `genes` and column k contains the score computed
+        using the first k+1 genes.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array of shape (n_cells, n_genes) with scaled cumulative scores. Any NaNs
+        or infinite values are converted to 0.0 before returning.
+
+    Notes
+    -----
+    - The function handles both sparse and dense matrices by converting sparse
+      inputs to dense arrays where needed.
+    - It relies on `adata.raw` being present; if your code uses a local variable
+      `raw` you should ensure it references `adata.raw`.
+    """
+
+    #raw = adata.raw
+
+    #X = raw[:, genes].X
+    X = adata.raw[:, genes].X
+    total_expr = adata.raw.X.sum(axis=1)
 
     if scipy.sparse.issparse(total_expr):
         total_expr = total_expr.A1
@@ -345,12 +377,14 @@ def _process_single_group(
     step,
     refine_window,
 ):
+    # instead of extract as dataframe columns extract for each group the properties as arrays
     genes = np.asarray(rg["names"][group]).astype(str)
     scores = np.asarray(rg["scores"][group], dtype=float)
     logfcs = np.asarray(rg["logfoldchanges"][group], dtype=float)
     padjs = np.asarray(rg[padj_key][group], dtype=float)
 
-    valid = np.isin(genes, expr.var_names)
+    # Check consistency of gene names with expression matrix and filter out genes not present in the expression matrix
+    valid = np.isin(genes, expr.var_names) # Q: filter out genes not in the expression matrix, why? Do we expect this could happens?
     genes = genes[valid]
     scores = scores[valid]
     logfcs = logfcs[valid]
@@ -359,6 +393,7 @@ def _process_single_group(
     mask_group = adata.obs[groupby].values == group
     mask_rest = ~mask_group
 
+    # number of postiitve cells for the group and the rest, used for percentage calculations
     n_group = int(mask_group.sum())
     n_rest = int(mask_rest.sum())
 
@@ -386,6 +421,13 @@ def _process_single_group(
     else:
         pct2_expr = np.zeros(len(genes), dtype=float)
 
+    # NOTE: we could avoid to create a dataframe and compute the percentage, 
+    # actually scapy already do this using pts=True in rank_genes_groups, 
+    # but we want to be sure to have the same percentage definition used for 
+    # filtering and for the final output, so we compute it here again.
+    # Eventually we could manage this in the parental function, check if pts 
+    # is present and if not compute it and add to the uns, but for now we compute 
+    # it here to be sure to have the same definition.
     df = pd.DataFrame(
         {
             "gene": genes,
@@ -409,17 +451,20 @@ def _process_single_group(
     if score is not None:
         mask &= df["score"] >= score
 
+    # keep only the top max_genes genes after filtering, sorted by score and logFC, to limit the number of genes tested for AUC optimization
     df = df.loc[mask].sort_values(["score", "logFC"], ascending=[False, False])
-    ranked_genes = df["gene"].drop_duplicates().tolist()[:max_genes]
+    ranked_genes = df["gene"].drop_duplicates().tolist()[:max_genes] # Q: Why drop duplicates? Do we expect duplicated genes in the DE results?
 
     if len(ranked_genes) < min_n:
         out = _empty_group_result()
         return group, out["markers"], out["log"]
 
-    y = (adata.obs[groupby].values == group).astype(int)
+    y = (adata.obs[groupby].values == group).astype(int) # put group to 1 and the rest to 0, used for AUC calculation
 
+    # score cumulation for all genes and all prefixes of the gene list, to avoid recomputing the scores for each tested n
     score_matrix = _cia_exact_scores_matrix(adata, ranked_genes)
     n_genes = len(ranked_genes)
+
 
     coarse_ns = _build_candidate_ns(
         n_genes=n_genes,
@@ -504,6 +549,59 @@ def retrieve_optimal_markers(
     step=5,
     refine_window=5,
 ):
+    """
+    Retrieve optimal markers for each group using CIA scoring with AUC optimization.
+
+    Parameters
+    ----------
+    adata : AnnData
+        Annotated data matrix.
+    groupby : str
+        Column name in adata.obs to use for grouping.
+    uns_key : str, optional
+        Key in adata.uns containing rank_genes_groups results. Default is "rank_genes_groups".
+    logFC : float, optional
+        Log fold change threshold. Default is 0.25.
+    score : str, optional
+        Scoring method. Default is None.
+    pct1 : float, optional
+        Percentage threshold 1. Default is 10.
+    pct2 : float, optional
+        Percentage threshold 2. Default is 100.
+    mean : float, optional
+        Mean expression threshold. Default is 0.1.
+    padj : float, optional
+        Adjusted p-value threshold. Default is 0.05.
+    auc_tolerance : float, optional
+        Tolerance for AUC selection. Default is None.
+    use_raw : bool, optional
+        Whether to use raw data. Must be True. Default is True.
+    verbose : bool, optional
+        If True, print progress information. Default is False.
+    uns_key_added : str, optional
+        Key to store results in adata.uns. Default is "retrieve_optimal_markers".
+    min_n : int, optional
+        Minimum number of genes to consider. Default is 1.
+    n_jobs : int, optional
+        Number of parallel jobs. If None, uses minimum of number of groups and CPU count. Default is None.
+    max_genes : int, optional
+        Maximum number of genes to test. Default is 250.
+    step : int, optional
+        Step size for testing different gene numbers. Default is 5.
+    refine_window : int, optional
+        Window size for refinement around optimal n. Default is 5.
+
+    Returns
+    -------
+    dict
+        Dictionary mapping group names to lists of optimal marker genes.
+
+    Raises
+    ------
+    ValueError
+        If groupby not in adata.obs, uns_key not in adata.uns, use_raw is False, adata.raw is None,
+        or if parameter values are invalid.
+    """
     if groupby not in adata.obs.columns:
         raise ValueError(f"{groupby!r} not found in adata.obs")
     if uns_key not in adata.uns:
@@ -537,6 +635,7 @@ def retrieve_optimal_markers(
     else:
         groups = list(pd.unique(col))
 
+    # Determine number of jobs for parallel processing based on the number of free core at the moment
     if n_jobs is None:
         n_jobs = min(len(groups), os.cpu_count() or 1)
     n_jobs = max(1, int(n_jobs))
@@ -586,12 +685,12 @@ def retrieve_optimal_markers(
                 step=step,
                 refine_window=refine_window,
             )
-            futures[future] = group
+            futures[future] = group #it works like a pointer, it doesn't block the execution
 
-        for future in as_completed(futures):
+        for future in as_completed(futures): 
             group = futures[future]
             try:
-                group_name, markers, group_log = future.result()
+                group_name, markers, group_log = future.result() # get the result for the ended thread
                 optimal_markers[group_name] = markers
                 logs["groups"][group_name] = group_log
 

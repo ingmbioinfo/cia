@@ -358,7 +358,7 @@ def _refine_ns(best_n, n_genes, min_n=1, refine_window=5):
     return list(range(lo, hi + 1))
 
 
-def _process_single_group(
+""" def _process_single_group(
     adata,
     expr,
     rg,
@@ -505,6 +505,170 @@ def _process_single_group(
         out = _empty_group_result()
         return group, out["markers"], out["log"]
 
+    raw_best_auc = max(tested.values())
+    raw_best_n = min(n for n, v in tested.items() if v == raw_best_auc)
+
+    if auc_tolerance is not None:
+        selected_n = min(n for n, v in tested.items() if v >= raw_best_auc - auc_tolerance)
+    else:
+        selected_n = raw_best_n
+
+    selected_auc = tested[selected_n]
+    markers = ranked_genes[:selected_n]
+
+    log_dict = {
+        "raw_best_n": int(raw_best_n),
+        "raw_best_auc": float(raw_best_auc),
+        "selected_n": int(selected_n),
+        "selected_auc": float(selected_auc),
+        "tested": {int(k): float(v) for k, v in sorted(tested.items())},
+        "n_cells_used_for_auc": int(adata.n_obs),
+        "n_ranked_genes_after_cap": int(len(ranked_genes)),
+    }
+
+    return group, markers, log_dict
+
+ """
+
+def _process_single_group(
+    adata,
+    expr,
+    rg,
+    padj_key,
+    groupby,
+    group,
+    logFC,
+    score,
+    pct1,
+    pct2,
+    mean,
+    padj,
+    auc_tolerance,
+    min_n,
+    max_genes,
+    step,
+    refine_window,
+):
+    # instead of extract as dataframe columns extract for each group the properties as arrays
+    genes = np.asarray(rg["names"][group]).astype(str)
+    scores = np.asarray(rg["scores"][group], dtype=float)
+    logfcs = np.asarray(rg["logfoldchanges"][group], dtype=float)
+    padjs = np.asarray(rg[padj_key][group], dtype=float)
+
+    # Check consistency of gene names with expression matrix and filter out genes not present in the expression matrix
+    valid = np.isin(genes, expr.var_names)
+    genes = genes[valid]
+    scores = scores[valid]
+    logfcs = logfcs[valid]
+    padjs = padjs[valid]
+
+    mask_group = adata.obs[groupby].values == group
+    mask_rest = ~mask_group
+
+    # number of postiitve cells for the group and the rest, used for percentage calculations
+    n_group = int(mask_group.sum())
+    n_rest = int(mask_rest.sum())
+
+    if n_group == 0:
+        out = _empty_group_result()
+        return group, out["markers"], out["log"]
+
+    Xg = expr[mask_group, genes].X
+    Xr = expr[mask_rest, genes].X
+
+    if scipy.sparse.issparse(Xg):
+        pct1_expr = np.asarray((Xg > 0).sum(axis=0)).ravel() / n_group * 100
+        mean_expr = np.asarray(Xg.mean(axis=0)).ravel()
+    else:
+        Xg = np.asarray(Xg)
+        pct1_expr = (Xg > 0).sum(axis=0) / n_group * 100
+        mean_expr = np.asarray(Xg.mean(axis=0)).ravel()
+
+    if n_rest > 0:
+        if scipy.sparse.issparse(Xr):
+            pct2_expr = np.asarray((Xr > 0).sum(axis=0)).ravel() / n_rest * 100
+        else:
+            Xr = np.asarray(Xr)
+            pct2_expr = (Xr > 0).sum(axis=0) / n_rest * 100
+    else:
+        pct2_expr = np.zeros(len(genes), dtype=float)
+
+    df = pd.DataFrame(
+        {
+            "gene": genes,
+            "score": scores,
+            "logFC": logfcs,
+            "padj": padjs,
+            "pct1": pct1_expr,
+            "pct2": pct2_expr,
+            "mean": mean_expr,
+        }
+    )
+
+    mask = (
+        (df["logFC"] >= logFC)
+        & (df["pct1"] >= pct1)
+        & (df["pct2"] <= pct2)
+        & (df["mean"] >= mean)
+        & (df["padj"] <= padj)
+    )
+
+    if score is not None:
+        mask &= df["score"] >= score
+
+    # keep only the top max_genes genes after filtering, sorted by score and logFC, to limit the number of genes tested for AUC optimization
+    df = df.loc[mask].sort_values(["score", "logFC"], ascending=[False, False])
+    ranked_genes = df["gene"].drop_duplicates().tolist()[:max_genes]
+
+    if len(ranked_genes) < min_n:
+        out = _empty_group_result()
+        return group, out["markers"], out["log"]
+
+    y = (adata.obs[groupby].values == group).astype(int) # put group to 1 and the rest to 0, used for AUC calculation
+
+    # score cumulation for all genes and all prefixes of the gene list, to avoid recomputing the scores for each tested n
+    score_matrix = _cia_exact_scores_matrix(adata, ranked_genes)
+    n_genes = len(ranked_genes)
+
+    # --- PHASE 1: COARSE EVALUATION (Geometric Spacing) ---
+    # Samples densely at the beginning and widely at the end to map the global AUC landscape quickly.
+    approx_n_points = max(5, int(np.ceil((n_genes - min_n) / step)))
+    coarse_ns = np.geomspace(min_n, n_genes, num=approx_n_points)
+    coarse_ns = np.round(coarse_ns).astype(int).tolist()
+    
+    # Boundary constraints enforcement
+    coarse_ns.append(min_n)
+    coarse_ns.append(n_genes)
+    coarse_ns = sorted(set(n for n in coarse_ns if min_n <= n <= n_genes))
+
+    tested = {}
+    for n in coarse_ns:
+        auc = roc_auc_score(y, score_matrix[:, n - 1])
+        if not np.isnan(auc):
+            tested[int(n)] = float(auc)
+
+    if len(tested) == 0:
+        out = _empty_group_result()
+        return group, out["markers"], out["log"]
+
+    # Locate the best candidate from the coarse geometric spectrum
+    coarse_best_auc = max(tested.values())
+    coarse_best_n = min(n for n, v in tested.items() if v == coarse_best_auc)
+
+    # --- PHASE 2: REFINE EVALUATION (High-Resolution Local Search) ---
+    # Inspects every single integer in the neighborhood of the coarse winner to catch the exact mathematical peak.
+    if refine_window > 0:
+        refine_min = max(min_n, coarse_best_n - refine_window)
+        refine_max = min(n_genes, coarse_best_n + refine_window)
+        refine_ns = range(refine_min, refine_max + 1)
+        
+        for n in refine_ns:
+            if n not in tested:  # Skip already processed points
+                auc = roc_auc_score(y, score_matrix[:, n - 1])
+                if not np.isnan(auc):
+                    tested[int(n)] = float(auc)
+
+    # Final optimum identification across all evaluated points
     raw_best_auc = max(tested.values())
     raw_best_n = min(n for n, v in tested.items() if v == raw_best_auc)
 
